@@ -6,6 +6,7 @@ Created on Sat Feb 27 15:51:43 2021
 @author: ghiggi
 """
 import os
+from sklearn.metrics import accuracy_score
 import xarray as xr 
 import numpy as np 
 import pandas as pd
@@ -14,6 +15,7 @@ import scipy.stats
 import time
 from dask.diagnostics import ProgressBar
 from xskillscore import crps_ensemble
+from skimage.metrics import structural_similarity as ssim
 
 # https://xskillscore.readthedocs.io/en/stable/api/xskillscore.pearson_r_eff_p_value.html
 ##----------------------------------------------------------------------------.
@@ -86,7 +88,56 @@ def _drop_nans(a, b, weights=None):
                 weights = weights.copy()
                 weights = np.delete(weights, idx)
     return a, b, weights
+
+
+def _drop_infs(a, b, weights=None):
+    """
+    Considers infinite values pairwise. 
+    If a value is infinite in a or b, the corresponding indices are dropped.
+         
+    Returns
+    -------
+    a, b, weights : ndarray
+        a, b, and weights (if not None) with infs placed at pairwise locations.
+    """
+    if np.isinf(a).any() or np.isinf(b).any():
+        # Avoids mutating original arrays and bypasses read-only issue.
+        a, b = a.copy(), b.copy()
+        # Find pairwise indices in a and b that have nans.
+        idx = np.logical_or(np.isinf(a), np.isinf(b))
+        a = np.delete(a, idx)
+        b = np.delete(b, idx)
+        if isinstance(weights, np.ndarray):
+            if weights.shape:  # not None
+                weights = weights.copy()
+                weights = np.delete(weights, idx)
+    return a, b, weights
  
+
+def _drop_pairwise_elements(a, b, weights=None, element=0):
+    """
+    Considers values pairwise. 
+    If the element is the same in a and b, the corresponding indices are dropped.
+         
+    Returns
+    -------
+    a, b, weights : ndarray
+        a, b, and weights (if not None) with elements placed at pairwise locations.
+    """
+    idx = np.logical_and(a == element, b == element)
+    if idx.any():
+        # Avoids mutating original arrays and bypasses read-only issue.
+        a, b = a.copy(), b.copy()
+        # Find pairwise indices in a and b that have nans.
+        idx = np.logical_or(np.isinf(a), np.isinf(b))
+        a = np.delete(a, idx)
+        b = np.delete(b, idx)
+        if isinstance(weights, np.ndarray):
+            if weights.shape:  # not None
+                weights = weights.copy()
+                weights = np.delete(weights, idx)
+    return a, b, weights
+
 ##----------------------------------------------------------------------------.
 # Covariance/Correlation functions for xarray 
 def _inner(x, y):
@@ -132,7 +183,7 @@ def _xr_pearson_correlation(x, y, aggregating_dims=None, thr=0.0000001, dask="pa
 #     y_rank = y.rank(dim=aggregating_dims)
 #     return _xr_pearson_correlation(x_rank,y_rank, aggregating_dims=aggregating_dims, thr=thr)
 ##----------------------------------------------------------------------------.
-def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
+def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True, skip_infs=True, skip_zeros=True):
     """Deterministic metrics for continuous predictions forecasts.
 
     This function expects pred and obs to be 1D vector of same size
@@ -143,8 +194,21 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
     if skip_na: 
         pred, obs, _ = _drop_nans(pred, obs)
         # If not non-NaN data, return a vector of nan data
-        if len(pred) == 0:
-            return np.ones(27)*np.nan
+        if len(pred) < 2:
+            return np.ones(28)*np.nan
+
+    # Preprocess data (remove NaN if asked)
+    if skip_infs: 
+        pred, obs, _ = _drop_infs(pred, obs)
+        # If not non-NaN data, return a vector of nan data
+        if len(pred) < 2:
+            return np.ones(28)*np.nan
+    
+    if skip_zeros:
+        pred, obs, _ = _drop_pairwise_elements(pred, obs, element=0)
+        # If not non-NaN data, return a vector of nan data
+        if len(pred) < 1:
+            return np.ones(28)*np.nan
     ##------------------------------------------------------------------------.
     # - Error 
     error = pred - obs
@@ -196,6 +260,9 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
     spearman_R, spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
     spearman_R2 = spearman_R**2
     ##------------------------------------------------------------------------.
+    # - Structural Similarity index
+    mssim = ssim(pred, obs)
+    ##------------------------------------------------------------------------.
     # - Overall skill metrics 
     LTM_forecast_error = ((obs_mean - obs)**2).sum() # Long-term mean as prediction
     NSE = 1 - ( error_squared.sum()/ (LTM_forecast_error + thr) )
@@ -230,6 +297,8 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
                        spearman_R,
                        spearman_R_pvalue,
                        spearman_R2,
+                       # Structural Similarity
+                       mssim,
                        # Overall skill 
                        NSE,
                        KGE])
@@ -238,16 +307,20 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
 def _deterministic_continuous_metrics(pred, obs, 
                                       dim = "time", 
                                       skip_na = True,
+                                      skip_infs=True, 
+                                      skip_zeros=True,
                                       thr=0.000001):                 
     ds_skill = xr.apply_ufunc(_det_cont_metrics,
                               pred,
                               obs,
-                              kwargs = {'thr': thr, 'skip_na': skip_na}, 
+                              kwargs = {'thr': thr, 'skip_na': skip_na,
+                                        "skip_infs": skip_infs, 
+                                        "skip_zeros": skip_zeros}, 
                               input_core_dims=[[dim], [dim]],  
                               output_core_dims=[["skill"]],  # returned data has one dimension
                               vectorize=True,
                               dask="parallelized",
-                              dask_gufunc_kwargs = {'output_sizes': {'skill': 27,}},                         
+                              dask_gufunc_kwargs = {'output_sizes': {'skill': 28,}},                         
                               output_dtypes=['float64'])  # dtype  
     # Compute the skills
     with ProgressBar():                        
@@ -265,12 +338,144 @@ def _deterministic_continuous_metrics(pred, obs,
             # Correlation
             "pearson_R", "pearson_R_pvalue", "pearson_R2",
             "spearman_R", "spearman_R_pvalue", "spearman_R2",
+            # Structural Similarity
+            "SSIM",
             # Overall skill 
             "NSE", "KGE"]         
     ds_skill = ds_skill.assign_coords({"skill": skill_str})    
     ##------------------------------------------------------------------------.
     # Return the skill Dataset
     return ds_skill
+
+
+#-----------------------------------------------------------------------------.
+# #########################################
+#### Deterministic categorical metrics ####
+# #########################################
+
+def _det_cat_metrics(pred, obs, thr=0.000001, skip_na=True, skip_infs=True, skip_zeros=True):
+    """Deterministic metrics for continuous predictions forecasts.
+
+    This function expects pred and obs to be 1D vector of same size
+    """   
+    # TODO robust with median and IQR / MAD 
+    ##------------------------------------------------------------------------.
+    # Preprocess data (remove NaN if asked)
+    if skip_na: 
+        pred, obs, _ = _drop_nans(pred, obs)
+        # If not non-NaN data, return a vector of nan data
+        if len(pred) < 2:
+            return np.ones(12)*np.nan
+
+    # Preprocess data (remove NaN if asked)
+    if skip_infs: 
+        pred, obs, _ = _drop_infs(pred, obs)
+        # If not non-NaN data, return a vector of nan data
+        if len(pred) < 2:
+            return np.ones(12)*np.nan
+    
+    if skip_zeros:
+        pred, obs, _ = _drop_pairwise_elements(pred, obs, element=0)
+        # If not non-NaN data, return a vector of nan data
+        if len(pred) < 1:
+            return np.ones(12)*np.nan
+    
+    # apply threshold
+    predb = pred > thr
+    obsb = obs > thr
+
+    # calculate hits, misses, false positives, correct rejects
+    H = np.nansum(np.logical_and(predb == 1, obsb == 1), dtype="float64")
+    F = np.nansum(np.logical_and(predb == 1, obsb == 0), dtype="float64")
+    M = np.nansum(np.logical_and(predb == 0, obsb == 1), dtype="float64")
+    R = np.nansum(np.logical_and(predb == 0, obsb == 0), dtype="float64")
+
+    # Probability of detection
+    POD = H / (H + M)
+    # False alarm ratio
+    FAR = F / (H + F)
+    # False alaram rate (prob of false detection)
+    FA = F / (F + R)
+    s = (H + M) / (H + M + F + R)
+
+    # Accuracy (fraction correct)
+    ACC = (H + R) / (H + M + F + R)
+    # Critical success index
+    CSI = H / (H + M + F)
+    # Frequency bias
+    FB = (H + F) / (H + M)
+
+    # Heidke Skill Score (-1 < HSS < 1) < 0 implies no skill
+    HSS = 2 * (H * R - F * M) / ((H + M) * (M + R) + (H + F) * (F + R))
+    # Hanssen-Kuipers Discriminant
+    HK = POD - FA
+
+    # Gilbert Skill Score
+    GSS = (POD - FA) / ((1 - s * POD) / (1 - s) + FA * (1 - s) / s)
+    # Symmetric extremal dependence index
+    SEDI = (np.log(FA) - np.log(POD) + np.log(1 - POD) - np.log(1 - FA)) / (
+        np.log(FA) + np.log(POD) + np.log(1 - POD) + np.log(1 - FA)
+    )
+    # Matthews correlation coefficient
+    MCC = (H * R - F * M) / np.sqrt((H + F) * (H + M) * (R + F) * (R + M))
+    # F1 score
+    F1 = 2 * H / (2 * H + F + M)
+    
+    skills = np.array([POD,
+                       FAR,
+                       FA,
+                       ACC,
+                       CSI,
+                       FB,
+                       HSS,
+                       HK,
+                       GSS,
+                       SEDI,
+                       MCC,
+                       F1
+                    ])
+    
+    return skills 
+##----------------------------------------------------------------------------.
+def _deterministic_categorical_metrics(pred, obs, 
+                                       dim = "time", 
+                                       skip_na = True,
+                                       skip_infs=True, 
+                                       skip_zeros=True,
+                                       thr=0.000001):                 
+    ds_skill = xr.apply_ufunc(_det_cat_metrics,
+                              pred,
+                              obs,
+                              kwargs = {'thr': thr, 'skip_na': skip_na,
+                                        "skip_infs": skip_infs, 
+                                        "skip_zeros": skip_zeros}, 
+                              input_core_dims=[[dim], [dim]],  
+                              output_core_dims=[["skill"]],  # returned data has one dimension
+                              vectorize=True,
+                              dask="parallelized",
+                              dask_gufunc_kwargs = {'output_sizes': {'skill': 12,}},                         
+                              output_dtypes=['float64'])  # dtype  
+    # Compute the skills
+    with ProgressBar():                        
+        ds_skill = ds_skill.compute()
+    # Add skill coordinates
+    skill_str = ["POD",
+                 "FAR",
+                 "FA",
+                 "ACC",
+                 "CSI",
+                 "FB",
+                 "HSS",
+                 "HK",
+                 "GSS",
+                 "SEDI",
+                 "MCC",
+                 "F1"]         
+    ds_skill = ds_skill.assign_coords({"skill": skill_str})    
+    ##------------------------------------------------------------------------.
+    # Return the skill Dataset
+    return ds_skill
+
 
 #-----------------------------------------------------------------------------.
 # #############################
@@ -324,7 +529,6 @@ def _probabilistic_metrics(pred, obs, dims, crps_ref, dim_member="member"):
     return ds_skill
 
 
-
 #-----------------------------------------------------------------------------.
 # #############################
 #### Verification Wrappers ####
@@ -332,7 +536,9 @@ def _probabilistic_metrics(pred, obs, dims, crps_ref, dim_member="member"):
 def deterministic(pred, obs, 
                   forecast_type="continuous",
                   aggregating_dim=None,
-                  skip_na=True, 
+                  skip_na=True,
+                  skip_infs=True, 
+                  skip_zeros=True,
                   thr=0.000001):
     """Compute deterministic skill metrics."""
     # Check
@@ -357,14 +563,22 @@ def deterministic(pred, obs,
                                                      obs = obs, 
                                                      dim = aggregating_dim,
                                                      skip_na = skip_na,
+                                                     skip_infs = skip_infs, 
+                                                     skip_zeros = skip_zeros,
                                                      thr = thr)
         print("- Elapsed time for forecast deterministic verification: {:.2f} minutes.".format((time.time() - t_i)/60))
-        return ds_skill
     else: 
         t_i = time.time()
-        raise NotImplementedError('Categorical forecast skill metrics are not yet implemented.')
+        ds_skill = _deterministic_categorical_metrics(pred = pred,
+                                                      obs = obs, 
+                                                      dim = aggregating_dim,
+                                                      skip_na = skip_na,
+                                                      skip_infs = skip_infs, 
+                                                      skip_zeros = skip_zeros,
+                                                      thr = thr)
         print("- Elapsed time for forecast deterministic verification: {:.2f} minutes.".format((time.time() - t_i)/60))
-
+    
+    return ds_skill
 #-----------------------------------------------------------------------------.
 # #############################
 #### Spatial Summaries     ####
