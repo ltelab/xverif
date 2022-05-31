@@ -16,6 +16,7 @@ import time
 from dask.diagnostics import ProgressBar
 from xskillscore import crps_ensemble
 from skimage.metrics import structural_similarity as ssim
+from pysteps.verification.spatialscores import fss
 
 # https://xskillscore.readthedocs.io/en/stable/api/xskillscore.pearson_r_eff_p_value.html
 ##----------------------------------------------------------------------------.
@@ -195,20 +196,20 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True, skip_infs=True, ski
         pred, obs, _ = _drop_nans(pred, obs)
         # If not non-NaN data, return a vector of nan data
         if len(pred) < 2:
-            return np.ones(28)*np.nan
+            return np.ones(27)*np.nan
 
     # Preprocess data (remove NaN if asked)
     if skip_infs: 
         pred, obs, _ = _drop_infs(pred, obs)
         # If not non-NaN data, return a vector of nan data
         if len(pred) < 2:
-            return np.ones(28)*np.nan
+            return np.ones(27)*np.nan
     
     if skip_zeros:
         pred, obs, _ = _drop_pairwise_elements(pred, obs, element=0)
         # If not non-NaN data, return a vector of nan data
         if len(pred) < 1:
-            return np.ones(28)*np.nan
+            return np.ones(27)*np.nan
     ##------------------------------------------------------------------------.
     # - Error 
     error = pred - obs
@@ -260,9 +261,6 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True, skip_infs=True, ski
     spearman_R, spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
     spearman_R2 = spearman_R**2
     ##------------------------------------------------------------------------.
-    # - Structural Similarity index
-    mssim = ssim(pred, obs)
-    ##------------------------------------------------------------------------.
     # - Overall skill metrics 
     LTM_forecast_error = ((obs_mean - obs)**2).sum() # Long-term mean as prediction
     NSE = 1 - ( error_squared.sum()/ (LTM_forecast_error + thr) )
@@ -297,8 +295,6 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True, skip_infs=True, ski
                        spearman_R,
                        spearman_R_pvalue,
                        spearman_R2,
-                       # Structural Similarity
-                       mssim,
                        # Overall skill 
                        NSE,
                        KGE])
@@ -338,8 +334,6 @@ def _deterministic_continuous_metrics(pred, obs,
             # Correlation
             "pearson_R", "pearson_R_pvalue", "pearson_R2",
             "spearman_R", "spearman_R_pvalue", "spearman_R2",
-            # Structural Similarity
-            "SSIM",
             # Overall skill 
             "NSE", "KGE"]         
     ds_skill = ds_skill.assign_coords({"skill": skill_str})    
@@ -528,7 +522,54 @@ def _probabilistic_metrics(pred, obs, dims, crps_ref, dim_member="member"):
     # Return the skill Dataset
     return ds_skill
 
+#-----------------------------------------------------------------------------.
+# #############################
+####### Spatial metrics #######
+# #############################
 
+def _spatial_metrics(pred, obs, win_size=5, thr=0.1):
+    pred = pred.copy()
+    obs = obs.copy()
+
+    pred[np.isnan(pred)] = 0
+    obs[np.isnan(obs)] = 0
+    # - Fraction Skill Score
+    fraction_ss = fss(pred, obs, thr, win_size)
+    
+    # - Structural Similarity index
+    mssim = ssim(pred, obs, win_size=win_size)
+
+    skills = np.array([
+        mssim,
+        fraction_ss
+    ])
+
+    return skills
+
+def _spatial_metrics_xarray(pred, obs, 
+                            dim = "time", 
+                            thr=0.000001,
+                            win_size=5):
+    input_core_dims = [[dim], [dim]] if type(dim) != list else [dim, dim]                 
+    ds_skill = xr.apply_ufunc(_spatial_metrics,
+                              pred,
+                              obs,
+                              kwargs = {"win_size": win_size, "thr": thr}, 
+                              input_core_dims=input_core_dims,
+                              output_core_dims=[["skill"]],  # returned data has one dimension
+                              vectorize=True,
+                              dask="parallelized",
+                              dask_gufunc_kwargs = {'output_sizes': {'skill': 2,}},                         
+                              output_dtypes=['float64'])  # dtype  
+    # Compute the skills
+    with ProgressBar():                        
+        ds_skill = ds_skill.compute()
+    # Add skill coordinates
+    skill_str = ["SSIM", "FSS"]         
+    ds_skill = ds_skill.assign_coords({"skill": skill_str})    
+    ##------------------------------------------------------------------------.
+    # Return the skill Dataset
+    return ds_skill
 #-----------------------------------------------------------------------------.
 # #############################
 #### Verification Wrappers ####
@@ -539,13 +580,14 @@ def deterministic(pred, obs,
                   skip_na=True,
                   skip_infs=True, 
                   skip_zeros=True,
-                  thr=0.000001):
+                  thr=0.000001,
+                  win_size=5):
     """Compute deterministic skill metrics."""
     # Check
     if not isinstance(forecast_type, str): 
         raise TypeError("'forecast_type' must be a string specifying the forecast type.")
-    if forecast_type not in ["continuous", "categorical"]:
-        raise ValueError("'forecast_type' must be either 'continuous' or 'categorical'.") 
+    if forecast_type not in ["continuous", "categorical", "spatial"]:
+        raise ValueError("'forecast_type' must be either 'continuous', 'categorical' or 'spatial'.") 
     #------------------------------------------------------------------------.
     # Align dataset (dimensions)
     pred, obs = xr.align(pred, obs, join="inner")
@@ -566,8 +608,8 @@ def deterministic(pred, obs,
                                                      skip_infs = skip_infs, 
                                                      skip_zeros = skip_zeros,
                                                      thr = thr)
-        print("- Elapsed time for forecast deterministic verification: {:.2f} minutes.".format((time.time() - t_i)/60))
-    else: 
+        print("- Elapsed time for forecast continuous deterministic verification: {:.2f} minutes.".format((time.time() - t_i)/60))
+    elif forecast_type == "categorical": 
         t_i = time.time()
         ds_skill = _deterministic_categorical_metrics(pred = pred,
                                                       obs = obs, 
@@ -576,7 +618,15 @@ def deterministic(pred, obs,
                                                       skip_infs = skip_infs, 
                                                       skip_zeros = skip_zeros,
                                                       thr = thr)
-        print("- Elapsed time for forecast deterministic verification: {:.2f} minutes.".format((time.time() - t_i)/60))
+        print("- Elapsed time for forecast categorical deterministic verification: {:.2f} minutes.".format((time.time() - t_i)/60))
+    else:
+        t_i = time.time()
+        ds_skill = _spatial_metrics_xarray(pred = pred,
+                                           obs = obs, 
+                                           dim = aggregating_dim,
+                                           thr = thr,
+                                           win_size = win_size)
+        print("- Elapsed time for forecast spatial deterministic verification: {:.2f} minutes.".format((time.time() - t_i)/60))
     
     return ds_skill
 #-----------------------------------------------------------------------------.
