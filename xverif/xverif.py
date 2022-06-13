@@ -316,7 +316,7 @@ def _deterministic_continuous_metrics(pred, obs,
                               output_core_dims=[["skill"]],  # returned data has one dimension
                               vectorize=True,
                               dask="parallelized",
-                              dask_gufunc_kwargs = {'output_sizes': {'skill': 28,}},                         
+                              dask_gufunc_kwargs = {'output_sizes': {'skill': 27,}},                         
                               output_dtypes=['float64'])  # dtype  
     # Compute the skills
     with ProgressBar():                        
