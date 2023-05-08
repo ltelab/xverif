@@ -1,6 +1,6 @@
 # xverif - A package to perform forecast verification builds upon xarray.
 
-The code in this repository provides a scalable and flexible framework to perform forecast verification. 
+The code in this repository provides a scalable and flexible framework to perform forecast verification.
 It principally builds upon xarray, dask and flox libraries.
 
 ATTENTION: The code is subject to changes in the coming months.
@@ -26,8 +26,8 @@ For a local installation, follow the below instructions.
    conda install notebook jupyterlab
    conda install numpy pandas numba scipy bottleneck
    ```
-   
-2. Alternatively install the dependencies using one of the appropriate below 
+
+2. Alternatively install the dependencies using one of the appropriate below
    environment.yml files:
    ```sh
    conda env create -f TODO.yml

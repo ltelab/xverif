@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Sat Feb 27 15:51:43 2021
 
 @author: ghiggi
 """
-import os
-import xarray as xr
+import time
+
 import numpy as np
-import pandas as pd
-import time
 import scipy.stats
-import time
+import xarray as xr
 from dask.diagnostics import ProgressBar
 from xskillscore import crps_ensemble
 
@@ -123,19 +120,13 @@ def _xr_covariance(x, y, aggregating_dims=None, dask="parallelized"):
     x_mean = x.mean(aggregating_dims)
     y_mean = y.mean(aggregating_dims)
     N = x.count(aggregating_dims)
-    return (
-        _xr_inner_product(x - x_mean, y - y_mean, dim=aggregating_dims, dask=dask) / N
-    )
+    return _xr_inner_product(x - x_mean, y - y_mean, dim=aggregating_dims, dask=dask) / N
 
 
-def _xr_pearson_correlation(
-    x, y, aggregating_dims=None, thr=0.0000001, dask="parallelized"
-):
+def _xr_pearson_correlation(x, y, aggregating_dims=None, thr=0.0000001, dask="parallelized"):
     x_std = x.std(aggregating_dims) + thr
     y_std = y.std(aggregating_dims) + thr
-    return _xr_covariance(x, y, aggregating_dims=aggregating_dims, dask=dask) / (
-        x_std * y_std
-    )
+    return _xr_covariance(x, y, aggregating_dims=aggregating_dims, dask=dask) / (x_std * y_std)
 
 
 # import bottleneck
@@ -258,9 +249,7 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
 
 
 ##----------------------------------------------------------------------------.
-def _deterministic_continuous_metrics(
-    pred, obs, dim="time", skip_na=True, thr=0.000001
-):
+def _deterministic_continuous_metrics(pred, obs, dim="time", skip_na=True, thr=0.000001):
     ds_skill = xr.apply_ufunc(
         _det_cont_metrics,
         pred,
@@ -399,13 +388,9 @@ def deterministic(
     """Compute deterministic skill metrics."""
     # Check
     if not isinstance(forecast_type, str):
-        raise TypeError(
-            "'forecast_type' must be a string specifying the forecast type."
-        )
+        raise TypeError("'forecast_type' must be a string specifying the forecast type.")
     if forecast_type not in ["continuous", "categorical"]:
-        raise ValueError(
-            "'forecast_type' must be either 'continuous' or 'categorical'."
-        )
+        raise ValueError("'forecast_type' must be either 'continuous' or 'categorical'.")
     # ------------------------------------------------------------------------.
     # Align dataset (dimensions)
     pred, obs = xr.align(pred, obs, join="inner")
@@ -430,9 +415,7 @@ def deterministic(
         return ds_skill
     else:
         t_i = time.time()
-        raise NotImplementedError(
-            "Categorical forecast skill metrics are not yet implemented."
-        )
+        raise NotImplementedError("Categorical forecast skill metrics are not yet implemented.")
         print(
             "- Elapsed time for forecast deterministic verification: {:.2f} minutes.".format(
                 (time.time() - t_i) / 60
