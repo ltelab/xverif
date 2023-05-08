@@ -1,0 +1,147 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0.0", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xverif"
+description = "Xarray-based package for forecasts/simulations verification"
+readme = "README.md"
+authors = [
+	{ name = "Gionata Ghiggi", email = "gionata.ghiggi@epfl.ch" },
+]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Operating System :: Unix",
+    "Operating System :: Microsoft",
+    "Operating System :: MacOS",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Hydrology",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+keywords = ["verification", "deterministic", "probabilistic", "spatial", "metrics"]
+dependencies = [
+    "xarray",
+    "h5py",
+    "netcdf4",
+    "dask",
+    "dask[distributed]",
+    "rechunker",
+    "pyresample",
+    "numba",
+]
+requires-python = ">=3.8"
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = ["pre-commit",
+       "black", "black[jupyter]", "blackdoc", "ruff",
+       "pytest", "pytest-cov", "pytest-mock", "pydantic",
+       "pip-tools", "bumpver", "twine",
+       "setuptools>=61.0.0", "wheel",
+       "sphinx", "sphinx-gallery", "sphinx_rtd_theme", "nbsphinx"]
+
+[project.urls]
+Homepage = "https://github.com/ghiggi/xverif"
+Source = "https://github.com/ghiggi/xverif"
+Tracker = "https://github.com/ghiggi/xverif/issues"
+Documentation = "https://xverif.readthedocs.io"
+changelog = "https://github.com/ghiggi/xverif/CHANGELOG.md"
+
+[tool.setuptools_scm]
+write_to = "xverif/_version.py"
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+packages = ["xverif"] # explicitly list the packages in modules
+# To customize, remove packages and use instead [tool.setuptools.packages.find]
+
+# [tool.setuptools.packages.find]
+# where = ["gpm_api"]
+# include = ["io", "..."]
+
+[tool.black]
+line-length = 100
+# skip-string-normalization = true
+target-version = [
+    "py37",
+    "py38",
+    "py39",
+    "py310",
+    "py311",
+]
+
+[tool.ruff]
+select = ["F",
+	  "E",
+	  "I",
+	  "W",
+	  "UP",
+	  "Q",
+	  # "SIM",
+	  # "PTH",
+	  #"RET",
+	 ]
+ignore = ["E722"]
+line-length = 120
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN", "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
+unfixable = []
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "dev*",
+    "xverif/test*",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+
+[tool.coverage]
+    [tool.coverage.run]
+    source = ["xverif"]
+    omit = [
+        "*dev*",
+        "*docs*",
+        "*tutorials*",
+    ]
+
+    [tool.coverage.report]
+    exclude_lines = [
+        "pragma: no cover",
+        "def __repr__",
+        "def __str__",
+    ]
