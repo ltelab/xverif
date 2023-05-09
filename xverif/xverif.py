@@ -19,6 +19,7 @@ from xskillscore import crps_ensemble
 # weights_lat /= weights_lat.sum()
 # error * weights_lat
 
+
 ##----------------------------------------------------------------------------.
 def xr_common_vars(x, y):
     """Retrieve common variables between two xr.Dataset."""
@@ -134,6 +135,7 @@ def _xr_pearson_correlation(x, y, aggregating_dims=None, thr=0.0000001, dask="pa
 #     return xr.apply_ufunc(bottleneck.rankdata, x,
 #                           input_core_dims=[[dim]],
 #                           dask="parallelized")
+
 
 # def _xr_spearman_correlation(x, y, aggregating_dims=None, thr=0.0000001):
 #     x_rank= x.rank(dim=aggregating_dims)
