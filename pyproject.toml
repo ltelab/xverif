@@ -21,7 +21,6 @@ flox = "^0.7.1"
 pytest = "^7.3.1"
 ruff = "^0.0.265"
 black = "^23.3.0"
-isort = "^5.12.0"
 pre-commit = "^3.3.1"
 
 
@@ -53,6 +52,7 @@ select = [
     "D",   # docstrings
     "F",   # pyflakes
     "E",   # pycodestyle
+    "I",   # isort
     "W",
     "YTT", # flake8-2020
     "B",   # flake8-bugbear
