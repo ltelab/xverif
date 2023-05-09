@@ -78,7 +78,7 @@ ignore = [
     "PLR0913",
 ]
 unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
-src = ["scoringutils", "tests"]
+src = ["xverif", "tests"]
 target-version = "py310"
 
 [tool.ruff.pydocstyle]
