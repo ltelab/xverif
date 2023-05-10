@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Created on Sat Feb 27 15:51:43 2021
+Created on Sat Feb 27 15:51:43 2021.
 
 @author: ghiggi
 """
@@ -18,6 +18,7 @@ from xskillscore import crps_ensemble
 # weights_lat = np.cos(np.deg2rad(lat))
 # weights_lat /= weights_lat.sum()
 # error * weights_lat
+
 
 ##----------------------------------------------------------------------------.
 def xr_common_vars(x, y):
@@ -40,6 +41,7 @@ def xr_common_vars(x, y):
 def _match_nans(a, b, weights=None):
     """
     Considers missing values pairwise.
+
     If a value is missing in a, the corresponding value in b is turned to nan, and
     vice versa.
 
@@ -66,6 +68,7 @@ def _match_nans(a, b, weights=None):
 def _drop_nans(a, b, weights=None):
     """
     Considers missing values pairwise.
+
     If a value is missing in a or b, the corresponding indices are dropped.
 
     Returns
@@ -120,13 +123,19 @@ def _xr_covariance(x, y, aggregating_dims=None, dask="parallelized"):
     x_mean = x.mean(aggregating_dims)
     y_mean = y.mean(aggregating_dims)
     N = x.count(aggregating_dims)
-    return _xr_inner_product(x - x_mean, y - y_mean, dim=aggregating_dims, dask=dask) / N
+    return (
+        _xr_inner_product(x - x_mean, y - y_mean, dim=aggregating_dims, dask=dask) / N
+    )
 
 
-def _xr_pearson_correlation(x, y, aggregating_dims=None, thr=0.0000001, dask="parallelized"):
+def _xr_pearson_correlation(
+    x, y, aggregating_dims=None, thr=0.0000001, dask="parallelized"
+):
     x_std = x.std(aggregating_dims) + thr
     y_std = y.std(aggregating_dims) + thr
-    return _xr_covariance(x, y, aggregating_dims=aggregating_dims, dask=dask) / (x_std * y_std)
+    return _xr_covariance(x, y, aggregating_dims=aggregating_dims, dask=dask) / (
+        x_std * y_std
+    )
 
 
 # import bottleneck
@@ -134,6 +143,7 @@ def _xr_pearson_correlation(x, y, aggregating_dims=None, thr=0.0000001, dask="pa
 #     return xr.apply_ufunc(bottleneck.rankdata, x,
 #                           input_core_dims=[[dim]],
 #                           dask="parallelized")
+
 
 # def _xr_spearman_correlation(x, y, aggregating_dims=None, thr=0.0000001):
 #     x_rank= x.rank(dim=aggregating_dims)
@@ -249,7 +259,9 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
 
 
 ##----------------------------------------------------------------------------.
-def _deterministic_continuous_metrics(pred, obs, dim="time", skip_na=True, thr=0.000001):
+def _deterministic_continuous_metrics(
+    pred, obs, dim="time", skip_na=True, thr=0.000001
+):
     ds_skill = xr.apply_ufunc(
         _det_cont_metrics,
         pred,
@@ -326,14 +338,14 @@ def _prob_metrics(pred, obs, dims, crps_ref, dim_member="member"):
     within_range_mean = within_range.mean(dim=dims)
 
     ##------------------------------------------------------------------------.
-    # - CRPS (Continous Ranked Probability Score)
+    # - CRPS (Continuous Ranked Probability Score)
     dims = list(pred.dims).copy()
     dims.remove(dim_member)
     dims.remove("lead_time")
     crps = crps_ensemble(obs, pred, dim=dims)
 
     ##------------------------------------------------------------------------.
-    # - CRPSS (Continous Ranked Probability Skill Score)
+    # - CRPSS (Continuous Ranked Probability Skill Score)
     crpss = 1 - (crps / crps_ref)
 
     skills = np.array([within_range_mean, crps, crpss])
@@ -388,9 +400,13 @@ def deterministic(
     """Compute deterministic skill metrics."""
     # Check
     if not isinstance(forecast_type, str):
-        raise TypeError("'forecast_type' must be a string specifying the forecast type.")
+        raise TypeError(
+            "'forecast_type' must be a string specifying the forecast type."
+        )
     if forecast_type not in ["continuous", "categorical"]:
-        raise ValueError("'forecast_type' must be either 'continuous' or 'categorical'.")
+        raise ValueError(
+            "'forecast_type' must be either 'continuous' or 'categorical'."
+        )
     # ------------------------------------------------------------------------.
     # Align dataset (dimensions)
     pred, obs = xr.align(pred, obs, join="inner")
@@ -415,7 +431,9 @@ def deterministic(
         return ds_skill
     else:
         t_i = time.time()
-        raise NotImplementedError("Categorical forecast skill metrics are not yet implemented.")
+        raise NotImplementedError(
+            "Categorical forecast skill metrics are not yet implemented."
+        )
         print(
             "- Elapsed time for forecast deterministic verification: {:.2f} minutes.".format(
                 (time.time() - t_i) / 60
