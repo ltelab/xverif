@@ -13,13 +13,13 @@ import xarray as xr
 
 def _get_random_data(shape, data_type, n_class=2):
     """Generate random array based on data_type."""
-    if data_type == "continuous":
-        data = np.random.rand(*shape)
+    if data_type in ["continuous", "probability"]:
+        data = np.random.rand(*shape) # within [0, 1]
     elif data_type == "categorical":
         class_values = np.arange(0, n_class)
         data = np.random.choice(class_values, size=shape)
     else:
-        valid_data_type = ["continuous", "categorical"]
+        valid_data_type = ["continuous", "categorical", "probability"]
         raise ValueError(f"Valid data_type are {valid_data_type}")
     return data
 

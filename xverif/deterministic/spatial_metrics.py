@@ -32,7 +32,7 @@ def _spatial_metrics(pred, obs, win_size=5, thr=0.1):
 
 
 @print_elapsed_time(task="deterministic spatial")
-def _spatial_metrics_xarray(pred, obs, dim="time", thr=0.000001, win_size=5):
+def _deterministic_spatial_metrics(pred, obs, dim="time", thr=0.000001, win_size=5):
     input_core_dims = [[dim], [dim]] if type(dim) != list else [dim, dim]
     ds_skill = xr.apply_ufunc(
         _spatial_metrics,

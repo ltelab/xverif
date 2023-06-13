@@ -9,7 +9,7 @@ import xarray as xr
 
 from xverif.deterministic.categorical_metrics import _deterministic_categorical_metrics
 from xverif.deterministic.continuous_metrics import _deterministic_continuous_metrics
-from xverif.deterministic.spatial_metrics import _spatial_metrics_xarray
+from xverif.deterministic.spatial_metrics import _deterministic_spatial_metrics
 
 
 ##----------------------------------------------------------------------------.
@@ -52,7 +52,11 @@ def check_forecast_type(forecast_type):
 
 
 def align_datasets(pred, obs):
-    """Align xarray Dataset."""
+    """Align xarray Dataset.
+
+    - Ensure coordinate alignment for matching dimensions.
+    - Ensure common subset of Dataset variables.
+    """
     # Align dataset dimensions
     pred, obs = xr.align(pred, obs, join="inner")
 
@@ -87,6 +91,11 @@ def deterministic(
 
     # ------------------------------------------------------------------------.
     # Run deterministic verification
+    # TODO: categorical --> binary/multiclass
+    # TODO:
+    # - here we could have a function importing the desired function from the module
+    # - forecast-type specific metrics kwargs are passed to the function and checked later on
+
     if forecast_type == "continuous":
         ds_skill = _deterministic_continuous_metrics(
             pred=pred,
@@ -106,7 +115,7 @@ def deterministic(
             thr=thr,
         )
     else:
-        ds_skill = _spatial_metrics_xarray(
+        ds_skill = _deterministic_spatial_metrics(
             pred=pred,
             obs=obs,
             dim=aggregating_dim,

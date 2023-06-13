@@ -74,6 +74,7 @@ Created on Sat Feb 27 15:51:43 2021.
 
 #### Broadcast obs xarray to pred
 
+
 ####--------------------------------------------------------------------------.
 #### Dataset preprocessing
 # --> Drop nans
@@ -109,6 +110,33 @@ Created on Sat Feb 27 15:51:43 2021.
 # --> axis
 # --> correlation?
 
+####--------------------------------------------------------------------------.
+#### Dimension names
+
+## aggregating_dims --> TODO argument name
+# - check available in both datasets
+# - time if want to calculate i.e. pixelwise the skills
+# - x, y if want to calculate overall metrics at each timestep
+
+## support_dims
+# - dims present in both dataset which are not aggregating dims
+
+## broadcast_dims
+# - dims present in only 1 dataset
+# - If obs to be broadcasted on pred (then become support_dims)
+
+# Objective
+# --> Transpose data to N x M  for vectorization
+# --> N=aggregating_dims,
+# --> M=aux_dims
+# --> K=broadcast_dims
+
+# --> Output array: skills x M (x K)
+
+
+# Obs can be
+# N x 1 (single pixel passed)
+# N x M (all pixels flattened out)
 
 
 ####--------------------------------------------------------------------------.

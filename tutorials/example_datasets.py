@@ -19,15 +19,17 @@ from xverif.datasets import (
 )
 
 # Simulate datasets
+create_timeseries_dataset(1000, data_type="continuous") # default
+create_timeseries_dataset(1000, data_type="categorical", n_class=3)
+create_timeseries_dataset(1000, data_type="probability", n_class=3)
+create_timeseries_forecast_dataset(1000)
 
-create_multimodel_ensemble_forecast_dataset(obs_number=1000, data_type="continuous")
-create_multimodel_ensemble_forecast_dataset(obs_number=1000, data_type="categorical", n_class=3)
-create_multimodel_dataset(obs_number=1000)
-create_ensemble_forecast_dataset(obs_number=1000)
 create_spatial2d_dataset(obs_number=1000)
 create_spatial3d_dataset(obs_number=1000)
-create_timeseries_dataset(1000)
-create_timeseries_forecast_dataset(1000)
+create_ensemble_forecast_dataset(obs_number=1000)
+create_multimodel_dataset(obs_number=1000)
+create_multimodel_ensemble_forecast_dataset(obs_number=1000)
+
 
 create_spatial2d_dataset(obs_number=1000,
                          obs_dim="time",
@@ -47,6 +49,11 @@ pred = create_ensemble_forecast_dataset(obs_number=1000)
 # Broadcasting obs to pred
 pred1, obs1 = xr.broadcast(pred, obs)
 np.testing.assert_allclose(obs1.isel({"realization": 0})["var1"].data, obs1.isel({"realization":1})["var1"].data)
+
+# Align datasets
+from xverif.wrappers import align_datasets
+
+pred2, obs2 = align_datasets(pred, obs)
 
 
 # Compute deterministic skills
