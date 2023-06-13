@@ -67,6 +67,7 @@ select = [
     "TCH", # type-checking imports
 ]
 ignore = [
+    "D401",
     "E402",
     "E731",
     "E501",

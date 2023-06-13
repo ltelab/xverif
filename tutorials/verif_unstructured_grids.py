@@ -8,7 +8,6 @@ import os
 
 import pygsp as pg
 import xarray as xr
-
 import xverif as xverif
 
 if __name__ == "__main__":
