@@ -14,22 +14,19 @@ from xverif.preprocessing import _drop_nans
 from xverif.utils.timing import print_elapsed_time
 
 
-def _get_metrics(pred, obs, skip_na=True, **kwargs):
+def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
     """Deterministic metrics for continuous predictions forecasts.
 
     This function expects pred and obs to be 1D vector of same size
     """
+    axis = tuple(axis)
+    print(pred.shape)
+    print(obs.shape)
     # TODO robust with median and IQR / MAD
-    pred = pred.flatten()
-    obs = obs.flatten()
     
-    ##------------------------------------------------------------------------.
-    # Preprocess data (remove NaN if asked)
-    if skip_na:
-        pred, obs, _ = _drop_nans(pred, obs)
-        # If not non-NaN data, return a vector of nan data
-        if len(pred) == 0:
-            return np.ones(27) * np.nan
+    # Broadcast obs to pred 
+    obs = obs*np.ones_like(pred) 
+    
     ##------------------------------------------------------------------------.
     # - Error
     error = pred - obs
@@ -37,14 +34,14 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
     error_perc = error / (obs + EPS)
     ##------------------------------------------------------------------------.
     # - Mean
-    pred_mean = pred.mean()
-    obs_mean = obs.mean()
-    error_mean = error.mean()
+    pred_mean = pred.mean(axis=axis)
+    obs_mean = obs.mean(axis=axis)
+    error_mean = error.mean(axis=axis)
     ##------------------------------------------------------------------------.
     # - Standard deviation
-    pred_std = pred.std()
-    obs_std = obs.std()
-    error_std = error.std()
+    pred_std = pred.std(axis=axis)
+    obs_std = obs.std(axis=axis)
+    error_std = error.std(axis=axis)
     ##------------------------------------------------------------------------.
     # - Coefficient of variability
     pred_CoV = pred_std / (pred_mean + EPS)
@@ -53,12 +50,12 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
     ##------------------------------------------------------------------------.
     # - Magnitude metrics
     BIAS = error_mean
-    MAE = np.abs(error).mean()
-    MSE = error_squared.mean()
+    MAE = np.abs(error).mean(axis=axis)
+    MSE = error_squared.mean(axis=axis)
     RMSE = np.sqrt(MSE)
 
-    percBIAS = error_perc.mean() * 100
-    percMAE = np.abs(error_perc).mean() * 100
+    percBIAS = error_perc.mean(axis=axis) * 100
+    percMAE = np.abs(error_perc).mean(axis=axis) * 100
 
     relBIAS = BIAS / (obs_mean + EPS)
     relMAE = MAE / (obs_mean + EPS)
@@ -74,21 +71,58 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
     diffSD = pred_std - obs_std
     rCoV = pred_CoV / obs_CoV
     diffCoV = pred_CoV - obs_CoV
-    # - Correlation metrics
-    pearson_R, pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
-    pearson_R2 = pearson_R**2
+    # # - Correlation metrics
+    # pearson_R, pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
+    # pearson_R2 = pearson_R**2
 
-    spearman_R, spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
-    spearman_R2 = spearman_R**2
+    # spearman_R, spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
+    # spearman_R2 = spearman_R**2
+
+    # ##------------------------------------------------------------------------.
+    # # - Overall skill metrics
+    # LTM_forecast_error = ((obs_mean - obs) ** 2).sum()  # Long-term mean as prediction
+    # NSE = 1 - (error_squared.sum() / (LTM_forecast_error + EPS))
+    # KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
 
     ##------------------------------------------------------------------------.
-    # - Overall skill metrics
-    LTM_forecast_error = ((obs_mean - obs) ** 2).sum()  # Long-term mean as prediction
-    NSE = 1 - (error_squared.sum() / (LTM_forecast_error + EPS))
-    KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
-
-    ##------------------------------------------------------------------------.
-    skills = np.array(
+    # list_skills =  [
+    #      pred_CoV,
+    #      obs_CoV,
+    #      error_CoV,
+    #      # Magnitude
+    #      BIAS,
+    #      MAE,
+    #      MSE,
+    #      RMSE,
+    #      percBIAS,
+    #      percMAE,
+    #      relBIAS,
+    #      relMAE,
+    #      relMSE,
+    #      relRMSE,
+    #      # Average
+    #      rMean,
+    #      diffMean,
+    #      # Variability
+    #      rSD,
+    #      diffSD,
+    #      rCoV,
+    #      diffCoV,
+    #      # Correlation
+    #      # pearson_R,
+    #      # pearson_R_pvalue,
+    #      # pearson_R2,
+    #      # spearman_R,
+    #      # spearman_R_pvalue,
+    #      # spearman_R2,
+    #      # # Overall skill
+    #      # NSE,
+    #      # KGE,
+    #  ]
+    # for i, s in enumerate(list_skills): 
+    #     print(i, s.shape)
+        
+    skills = np.stack(
         [
             pred_CoV,
             obs_CoV,
@@ -113,17 +147,19 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
             rCoV,
             diffCoV,
             # Correlation
-            pearson_R,
-            pearson_R_pvalue,
-            pearson_R2,
-            spearman_R,
-            spearman_R_pvalue,
-            spearman_R2,
-            # Overall skill
-            NSE,
-            KGE,
-        ]
+            # pearson_R,
+            # pearson_R_pvalue,
+            # pearson_R2,
+            # spearman_R,
+            # spearman_R_pvalue,
+            # spearman_R2,
+            # # Overall skill
+            # NSE,
+            # KGE,
+        ], axis = -1
     )
+    print(skills.shape)
+    print("----")
     return skills
 
 
@@ -154,15 +190,15 @@ def get_metrics_info():
         "rCoV",
         "diffCoV",
         # Correlation
-        "pearson_R",
-        "pearson_R_pvalue",
-        "pearson_R2",
-        "spearman_R",
-        "spearman_R_pvalue",
-        "spearman_R2",
+        # "pearson_R",
+        # "pearson_R_pvalue",
+        # "pearson_R2",
+        # "spearman_R",
+        # "spearman_R_pvalue",
+        # "spearman_R2",
         # Overall skill
-        "NSE",
-        "KGE",
+        # "NSE",
+        # "KGE",
     ]
     return func, skill_names
 
@@ -171,13 +207,19 @@ def get_metrics_info():
 def _xr_apply_routine(
     pred, obs, dims=("time"), **kwargs,
 ):
-    """Compute deterministic continuous metrics."""
+    """Compute deterministic continuous metrics.
+    
+    dims must be a tuple, unique values 
+    """
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
 
-    # Check kwargs
-    # TODO
-
+    # Update kwargs with axis
+    n_dims = len(list(pred.dims))
+    n_aggregating_dims = len(dims)
+    axis = list(range(n_dims-n_aggregating_dims, n_dims))
+    kwargs.update({'axis': axis})
+   
     # Define gufunc kwargs
     input_core_dims = [dims, dims]
     dask_gufunc_kwargs = {
@@ -195,7 +237,7 @@ def _xr_apply_routine(
         kwargs=kwargs,
         input_core_dims=input_core_dims,
         output_core_dims=[["skill"]],  # returned data has one dimension
-        vectorize=True,
+        vectorize=False,
         dask="parallelized",
         dask_gufunc_kwargs=dask_gufunc_kwargs,
         output_dtypes=["float64"],
@@ -210,8 +252,6 @@ def _xr_apply_routine(
 
     # Return the skill Dataset
     return ds_skill
-
-
 
 
 

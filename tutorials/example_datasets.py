@@ -58,7 +58,7 @@ pred2, obs2 = align_xarray_objects(pred, obs)
 
 # Compute deterministic skills (1 sample_dims)
 import xverif
-
+from xverif.datasets import create_timeseries_dataset, create_timeseries_forecast_dataset
 obs = create_timeseries_dataset(100)
 pred = create_timeseries_forecast_dataset(100)
 
@@ -77,9 +77,20 @@ ds_skills.to_array(dim="variables").to_dataset(dim="skill")
 
 
 # Compute deterministic skills (2 sample_dims)
-# TODO: BUG
-obs = create_spatial2d_dataset(100)
-pred = create_spatial2d_dataset(100)
+import xverif 
+from xverif.datasets import create_spatial2d_dataset, create_ensemble_forecast_dataset
+obs = create_spatial2d_dataset(15)
+pred = create_spatial2d_dataset(15)
+pred = create_ensemble_forecast_dataset(15)
+
+forecast_type="continuous"
+aggregating_dim=["x","y"]
+dims=aggregating_dim
+skip_na=True
+skip_infs=True
+skip_zeros=True
+# kwargs = {'axis': [3,4]}
+
 ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
@@ -90,8 +101,44 @@ ds_skills = xverif.deterministic(
     skip_zeros=True,
 )
 
+# Emulate xr_apply_ufunc dimension reordering 
+pred = pred.transpose(..., "x","y")['var1'].data
+obs = np.expand_dims(obs.transpose(..., "x","y")['var1'].data, axis=[1,2])
+axis = [3, 4]
+pred.shape 
+obs.shape
+
+arr = 
+arr.shape
 
 # if aggregating_dim=None, set all the non broadcasting_dims
+
+
+# input (x,y, time) 
+# aggregating_dims = ('x','y')
+# vectorize=True,  core_dims=['x','y'] --> arr shape (x, y) 
+# vectorize=False, core_dims=['x','y'] --> arr shape (time, x, y)  (aggregating dims moved to output position)
+
+# vectorize=True
+# --> Loopa su ognuna delle dimensioni non-core_dims (aggregating dims) 
+# --> Passa alla funzione sottostante l'array con core_dims ... e basta fare flatten per processarlo
+
+# vectorize=False  
+
+# Input
+(15, 24, 48, 10, 10)
+
+# Collapse sample_dims
+(15, 24, 48, 10*10)
+
+# Output corr
+(15, 24, 48, 1)
+
+#---------------------------------------------------------------------------.
+
+
+
+
 
 
 ### TODO

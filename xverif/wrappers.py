@@ -161,7 +161,7 @@ def deterministic(
     pred, obs = align_xarray_objects(pred, obs)
 
     # Broadcast obs to pred
-    pred, obs = xr.broadcast(pred, obs)
+    # pred, obs = xr.broadcast(pred, obs)
 
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(metric_type="deterministic", forecast_type=forecast_type)
