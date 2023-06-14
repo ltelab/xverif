@@ -56,21 +56,45 @@ from xverif.wrappers import align_datasets
 pred2, obs2 = align_datasets(pred, obs)
 
 
-# Compute deterministic skills
-from xverif.wrappers import deterministic
+# Compute deterministic skills (1 sample_dims)
+import xverif
 
-ds_skills = deterministic(
+obs = create_timeseries_dataset(100)
+pred = create_timeseries_forecast_dataset(100)
+
+ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
     forecast_type="continuous",
-    aggregating_dim=["time"],
+    aggregating_dim="time",
     skip_na=True,
-    # TODO ADD
     skip_infs=True,
     skip_zeros=True,
-    win_size=5,
-    thr=0.000001,
 )
 
 
+ds_skills.to_array(dim="variables").to_dataset(dim="skill")
 
+
+# Compute deterministic skills (2 sample_dims)
+# TODO: BUG
+obs = create_spatial2d_dataset(100)
+pred = create_spatial2d_dataset(100)
+ds_skills = xverif.deterministic(
+    pred=pred,
+    obs=obs,
+    forecast_type="continuous",
+    aggregating_dim=["x","y"],
+    skip_na=True,
+    skip_infs=True,
+    skip_zeros=True,
+)
+
+
+# if aggregating_dim=None, set all the non broadcasting_dims
+
+
+### TODO
+# - reshaping
+# - transposing
+# - stack variables

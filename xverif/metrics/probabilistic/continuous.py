@@ -37,7 +37,7 @@ def _prob_metrics(pred, obs, dims, crps_ref, dim_member="member"):
 
 
 ##----------------------------------------------------------------------------.
-def _probabilistic_metrics(pred, obs, dims, crps_ref, dim_member="member"):
+def _xr_apply_routine(pred, obs, dims, crps_ref, dim_member="member"):
     ds_skill = xr.apply_ufunc(
         _prob_metrics,
         pred,

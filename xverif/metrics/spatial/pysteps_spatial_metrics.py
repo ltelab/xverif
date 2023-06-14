@@ -5,7 +5,6 @@ import collections
 
 import numpy as np
 from scipy.ndimage import uniform_filter
-
 from xverif.utils.exceptions import MissingOptionalDependency
 
 try:

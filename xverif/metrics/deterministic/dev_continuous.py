@@ -7,6 +7,7 @@ Created on Tue Jun 13 14:47:15 2023.
 """
 import numpy as np
 import xarray as xr
+from xverif import EPS
 
 
 ##----------------------------------------------------------------------------.
@@ -48,10 +49,10 @@ def _xr_covariance(x, y, aggregating_dims=None, dask="parallelized"):
 
 
 def _xr_pearson_correlation(
-    x, y, aggregating_dims=None, thr=0.0000001, dask="parallelized"
+    x, y, aggregating_dims=None, dask="parallelized"
 ):
-    x_std = x.std(aggregating_dims) + thr
-    y_std = y.std(aggregating_dims) + thr
+    x_std = x.std(aggregating_dims) + EPS
+    y_std = y.std(aggregating_dims) + EPS
     return _xr_covariance(x, y, aggregating_dims=aggregating_dims, dask=dask) / (
         x_std * y_std
     )
@@ -64,7 +65,7 @@ def _xr_pearson_correlation(
 #                           dask="parallelized")
 
 
-# def _xr_spearman_correlation(x, y, aggregating_dims=None, thr=0.0000001):
+# def _xr_spearman_correlation(x, y, aggregating_dims=None):
 #     x_rank= x.rank(dim=aggregating_dims)
 #     y_rank = y.rank(dim=aggregating_dims)
-#     return _xr_pearson_correlation(x_rank,y_rank, aggregating_dims=aggregating_dims, thr=thr)
+#     return _xr_pearson_correlation(x_rank,y_rank, aggregating_dims=aggregating_dims)

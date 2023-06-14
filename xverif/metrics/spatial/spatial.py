@@ -9,8 +9,7 @@ import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from skimage.metrics import structural_similarity as ssim
-
-from xverif.deterministic.pysteps_spatial_metrics import fss
+from xverif.metrics.deterministic.pysteps_spatial_metrics import fss
 from xverif.utils.timing import print_elapsed_time
 
 
@@ -32,7 +31,7 @@ def _spatial_metrics(pred, obs, win_size=5, thr=0.1):
 
 
 @print_elapsed_time(task="deterministic spatial")
-def _deterministic_spatial_metrics(pred, obs, dim="time", thr=0.000001, win_size=5):
+def _xr_apply_routine(pred, obs, dim="time", thr=0.000001, win_size=5):
     input_core_dims = [[dim], [dim]] if type(dim) != list else [dim, dim]
     ds_skill = xr.apply_ufunc(
         _spatial_metrics,

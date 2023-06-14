@@ -5,12 +5,13 @@ Created on Tue Jun 13 14:48:21 2023.
 
 @author: ghiggi
 """
+from importlib import import_module
+
+import numpy as np
 import xarray as xr
 
-from xverif.deterministic.categorical_metrics import _deterministic_categorical_metrics
-from xverif.deterministic.continuous_metrics import _deterministic_continuous_metrics
-from xverif.deterministic.spatial_metrics import _deterministic_spatial_metrics
-
+VALID_FORECAST_TYPE = ["continuous", "categorical_binary", "categorical_multiclass"]
+VALID_METRIC_TYPE = ["deterministic", "probabilistic", "spatial"]
 
 ##----------------------------------------------------------------------------.
 def xr_common_vars(x, y):
@@ -28,6 +29,7 @@ def xr_common_vars(x, y):
     else:
         return common_vars
 
+
 def ensure_dataset_same_variables(pred, obs):
     """Return xr.Datasets with common variables."""
     common_vars = xr_common_vars(pred, obs)
@@ -38,17 +40,55 @@ def ensure_dataset_same_variables(pred, obs):
     return pred, obs
 
 
+def check_aggregating_dim(aggregating_dim):
+    """Check aggregating_dims format."""
+    if isinstance(aggregating_dim, str):
+        aggregating_dim = [aggregating_dim]
+    return aggregating_dim
+
+
+def check_validity_aggregating_dim(aggregating_dim, xr_obj):
+    """Check validity of aggregating dimensions."""
+    dims = list(xr_obj.dims)
+    aggregating_dim = np.array(aggregating_dim)
+    unvalid_dims = aggregating_dim[np.isin(aggregating_dim, dims, invert=True)].tolist()
+    if len(unvalid_dims) > 0:
+        if len(unvalid_dims==1):
+            raise ValueError(f"The aggregating dimension {unvalid_dims} is not an xarray dimension.")
+        else:
+             raise ValueError(f"The aggregating dimensions {unvalid_dims} are not xarray dimensions.")
+
+
 def check_forecast_type(forecast_type):
     """Check forecast_type validity."""
     if not isinstance(forecast_type, str):
-        raise TypeError(
-            "'forecast_type' must be a string specifying the forecast type."
-        )
-    if forecast_type not in ["continuous", "categorical", "spatial"]:
-     raise ValueError(
-         "'forecast_type' must be either 'continuous', 'categorical' or 'spatial'."
-     )
-     return forecast_type
+        raise TypeError("'forecast_type' must be a string.")
+    if forecast_type not in VALID_FORECAST_TYPE:
+        raise ValueError(f"Valid 'forecast_type' are {VALID_FORECAST_TYPE}")
+    return forecast_type
+
+
+def check_metric_type(metric_type):
+    """Check metric_type validity."""
+    if not isinstance(metric_type, str):
+        raise TypeError("'metric_type' must be a string.")
+    if metric_type not in VALID_METRIC_TYPE:
+        raise ValueError(f"Valid 'metric_type' are {VALID_METRIC_TYPE}")
+    return metric_type
+
+
+def _get_xr_routine(metric_type, forecast_type):
+    """Retrieve xarray routine to compute the metrics."""
+    # Check inputs
+    forecast_type = check_forecast_type(forecast_type)
+    metric_type = check_metric_type(metric_type)
+    # Define module path
+    module_path = f"xverif.metrics.{metric_type}.{forecast_type}"
+    # Import the module
+    module = import_module(module_path)
+    # Import the function
+    function = module._xr_apply_routine
+    return function
 
 
 def align_datasets(pred, obs):
@@ -62,7 +102,7 @@ def align_datasets(pred, obs):
 
     # Align dataset variables
     # TODO: check that both are xr.Dataset !
-    pred, obs  = ensure_dataset_same_variables(pred, obs)
+    pred, obs = ensure_dataset_same_variables(pred, obs)
     return pred, obs
 
 
@@ -72,57 +112,46 @@ def deterministic(
     obs,
     forecast_type="continuous",
     aggregating_dim=None,
+    # TODO: to refactor name
     skip_na=True,
-    # TODO ADD
     skip_infs=True,
     skip_zeros=True,
-    win_size=5,
-    thr=0.000001,
 ):
     """Compute deterministic skill metrics."""
     # ------------------------------------------------------------------------.
     # Check input arguments
-    # TODO
+    aggregating_dim = check_aggregating_dim(aggregating_dim)
     forecast_type = check_forecast_type(forecast_type)
+
+    check_validity_aggregating_dim(aggregating_dim, pred)
+    check_validity_aggregating_dim(aggregating_dim, obs)
 
     # ------------------------------------------------------------------------.
     # Align datasets
     pred, obs = align_datasets(pred, obs)
 
-    # ------------------------------------------------------------------------.
-    # Run deterministic verification
-    # TODO: categorical --> binary/multiclass
-    # TODO:
-    # - here we could have a function importing the desired function from the module
-    # - forecast-type specific metrics kwargs are passed to the function and checked later on
+    ####----------------------------------------------------------------------.
+    # Retrieve xarray routine
+    _xr_routine = _get_xr_routine(metric_type="deterministic", forecast_type=forecast_type)
 
-    if forecast_type == "continuous":
-        ds_skill = _deterministic_continuous_metrics(
-            pred=pred,
-            obs=obs,
-            dim=aggregating_dim,
-            skip_na=skip_na,
-            thr=thr
-        )
-    elif forecast_type == "categorical":
-        ds_skill = _deterministic_categorical_metrics(
-            pred=pred,
-            obs=obs,
-            dim=aggregating_dim,
-            skip_na=skip_na,
-            skip_infs=skip_infs,
-            skip_zeros=skip_zeros,
-            thr=thr,
-        )
-    else:
-        ds_skill = _deterministic_spatial_metrics(
-            pred=pred,
-            obs=obs,
-            dim=aggregating_dim,
-            thr=thr,
-            win_size=win_size
-        )
+    # Compute skills
+    ds_skill = _xr_routine(
+        pred=pred,
+        obs=obs,
+        dims=aggregating_dim,
+        skip_na=skip_na,
+        skip_infs=skip_infs,
+        skip_zeros=skip_zeros,
+    )
     return ds_skill
+
+
+def probabilistic():
+    """Compute probabilistic skill metrics."""
+
+
+def spatial():
+    """Compute spatial skill metrics."""
 
 
 # -----------------------------------------------------------------------------.

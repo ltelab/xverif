@@ -9,12 +9,12 @@ import numpy as np
 import scipy.stats
 import xarray as xr
 from dask.diagnostics import ProgressBar
-
+from xverif import EPS
 from xverif.preprocessing import _drop_nans
 from xverif.utils.timing import print_elapsed_time
 
 
-def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
+def _get_metrics(pred, obs, skip_na=True, **kwargs):
     """Deterministic metrics for continuous predictions forecasts.
 
     This function expects pred and obs to be 1D vector of same size
@@ -31,7 +31,7 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
     # - Error
     error = pred - obs
     error_squared = error**2
-    error_perc = error / (obs + thr)
+    error_perc = error / (obs + EPS)
     ##------------------------------------------------------------------------.
     # - Mean
     pred_mean = pred.mean()
@@ -44,9 +44,9 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
     error_std = error.std()
     ##------------------------------------------------------------------------.
     # - Coefficient of variability
-    pred_CoV = pred_std / (pred_mean + thr)
-    obs_CoV = obs_std / (obs_mean + thr)
-    error_CoV = error_std / (error_mean + thr)
+    pred_CoV = pred_std / (pred_mean + EPS)
+    obs_CoV = obs_std / (obs_mean + EPS)
+    error_CoV = error_std / (error_mean + EPS)
     ##------------------------------------------------------------------------.
     # - Magnitude metrics
     BIAS = error_mean
@@ -57,17 +57,17 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
     percBIAS = error_perc.mean() * 100
     percMAE = np.abs(error_perc).mean() * 100
 
-    relBIAS = BIAS / (obs_mean + thr)
-    relMAE = MAE / (obs_mean + thr)
-    relMSE = MSE / (obs_mean + thr)
-    relRMSE = RMSE / (obs_mean + thr)
+    relBIAS = BIAS / (obs_mean + EPS)
+    relMAE = MAE / (obs_mean + EPS)
+    relMSE = MSE / (obs_mean + EPS)
+    relRMSE = RMSE / (obs_mean + EPS)
     ##------------------------------------------------------------------------.
     # - Average metrics
-    rMean = pred_mean / (obs_mean + thr)
+    rMean = pred_mean / (obs_mean + EPS)
     diffMean = pred_mean - obs_mean
     ##------------------------------------------------------------------------.
     # - Variability metrics
-    rSD = pred_std / (obs_std + thr)
+    rSD = pred_std / (obs_std + EPS)
     diffSD = pred_std - obs_std
     rCoV = pred_CoV / obs_CoV
     diffCoV = pred_CoV - obs_CoV
@@ -81,7 +81,7 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
     ##------------------------------------------------------------------------.
     # - Overall skill metrics
     LTM_forecast_error = ((obs_mean - obs) ** 2).sum()  # Long-term mean as prediction
-    NSE = 1 - (error_squared.sum() / (LTM_forecast_error + thr))
+    NSE = 1 - (error_squared.sum() / (LTM_forecast_error + EPS))
     KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
 
     ##------------------------------------------------------------------------.
@@ -126,7 +126,7 @@ def _det_cont_metrics(pred, obs, thr=0.000001, skip_na=True):
 
 def get_metrics_info():
     """Get metrics information."""
-    func = _det_cont_metrics
+    func = _get_metrics
     skill_names = [
         "pred_CoV",
         "obs_CoV",
@@ -166,26 +166,31 @@ def get_metrics_info():
 
 
 @print_elapsed_time(task="deterministic continuous")
-def _deterministic_continuous_metrics(
-    pred, obs, dim="time", skip_na=True, thr=0.000001
+def _xr_apply_routine(
+    pred, obs, dims=("time"), **kwargs,
 ):
     """Compute deterministic continuous metrics."""
-    # Retrieve apply_ufunc input parameters
+    # Retrieve function and skill names
     func, skill_names = get_metrics_info()
-    kwargs = {"thr": thr, "skip_na": skip_na}
 
-    dask_gufunc_kwargs={"output_sizes":
-                        {"skill": len(skill_names),
-                         }
-                       }
-    # -----------------------------------------------------------------------..
+    # Check kwargs
+    # TODO
+
+    # Define gufunc kwargs
+    dask_gufunc_kwargs={
+        "output_sizes":
+            {
+                "skill": len(skill_names),
+             }
+    }
+
     # Apply ufunc
     ds_skill = xr.apply_ufunc(
         func,
         pred,
         obs,
         kwargs=kwargs,
-        input_core_dims=[[dim], [dim]],
+        input_core_dims=[dims, dims],
         output_core_dims=[["skill"]],  # returned data has one dimension
         vectorize=True,
         dask="parallelized",

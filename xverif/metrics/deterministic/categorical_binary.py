@@ -8,25 +8,17 @@ Created on Tue Jun 13 13:45:52 2023.
 import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
-
 from xverif.preprocessing import _drop_infs, _drop_nans, _drop_pairwise_elements
 from xverif.utils.timing import print_elapsed_time
 
-# -----------------------------------------------------------------------------.
-# #########################################
-#### Deterministic categorical metrics ####
-# #########################################
 
-
-def _det_cat_metrics(
-    pred, obs, thr=0.000001, skip_na=True, skip_infs=True, skip_zeros=True
+def _get_metrics(
+    pred, obs, skip_na=True, skip_infs=True, skip_zeros=True
 ):
     """Compute deterministic metrics for categorical binary predictions.
 
     This function expects pred and obs to be 1D vector of same size.
     """
-    # TODO robust with median and IQR / MAD
-    ##------------------------------------------------------------------------.
     # Preprocess data (remove NaN if asked)
     if skip_na:
         pred, obs, _ = _drop_nans(pred, obs)
@@ -47,15 +39,11 @@ def _det_cat_metrics(
         if len(pred) < 1:
             return np.ones(12) * np.nan
 
-    # apply threshold
-    predb = pred > thr
-    obsb = obs > thr
-
     # calculate hits, misses, false positives, correct rejects
-    H = np.nansum(np.logical_and(predb == 1, obsb == 1), dtype="float64")
-    F = np.nansum(np.logical_and(predb == 1, obsb == 0), dtype="float64")
-    M = np.nansum(np.logical_and(predb == 0, obsb == 1), dtype="float64")
-    R = np.nansum(np.logical_and(predb == 0, obsb == 0), dtype="float64")
+    H = np.nansum(np.logical_and(pred == 1, obs == 1), dtype="float64")
+    F = np.nansum(np.logical_and(pred == 1, obs == 0), dtype="float64")
+    M = np.nansum(np.logical_and(pred == 0, obs == 1), dtype="float64")
+    R = np.nansum(np.logical_and(pred == 0, obs == 0), dtype="float64")
 
     # Probability of detection
     POD = H / (H + M)
@@ -96,38 +84,10 @@ def _det_cat_metrics(
 ##----------------------------------------------------------------------------.
 
 
-@print_elapsed_time(task="deterministic categorical")
-def _deterministic_categorical_metrics(
-    pred, obs, dim="time", skip_na=True, skip_infs=True, skip_zeros=True, thr=0.000001
-):
-    ds_skill = xr.apply_ufunc(
-        _det_cat_metrics,
-        pred,
-        obs,
-        kwargs={
-            "thr": thr,
-            "skip_na": skip_na,
-            "skip_infs": skip_infs,
-            "skip_zeros": skip_zeros,
-        },
-        input_core_dims=[[dim], [dim]],
-        output_core_dims=[["skill"]],  # returned data has one dimension
-        vectorize=True,
-        dask="parallelized",
-        dask_gufunc_kwargs={
-            "output_sizes": {
-                "skill": 12,
-            }
-        },
-        output_dtypes=["float64"],
-    )  # dtype
-
-    # Compute the skills
-    with ProgressBar():
-        ds_skill = ds_skill.compute()
-
-    # Add skill coordinates
-    skill_str = [
+def get_metrics_info():
+    """Get metrics information."""
+    func = _get_metrics
+    skill_names = [
         "POD",
         "FAR",
         "FA",
@@ -141,8 +101,47 @@ def _deterministic_categorical_metrics(
         "MCC",
         "F1",
     ]
-    ds_skill = ds_skill.assign_coords({"skill": skill_str})
-    ##------------------------------------------------------------------------.
+    return func, skill_names
+
+
+@print_elapsed_time(task="deterministic categorical")
+def _xr_apply_routine(
+    pred, obs, dims=["time"], **kwargs,
+):
+    # Retrieve function and skill names
+    func, skill_names = get_metrics_info()
+
+    # Check kwargs
+    # TODO
+
+    # Define gufunc kwargs
+    dask_gufunc_kwargs={
+        "output_sizes":
+            {
+                "skill": len(skill_names),
+             }
+    }
+
+    # Apply ufunc
+    ds_skill = xr.apply_ufunc(
+        func,
+        pred,
+        obs,
+        kwargs=kwargs,
+        input_core_dims=[dims, dims],
+        output_core_dims=[["skill"]],  # returned data has one dimension
+        vectorize=True,
+        dask="parallelized",
+        dask_gufunc_kwargs=dask_gufunc_kwargs,
+        output_dtypes=["float64"],
+    )  # dtype
+
+    # Compute the skills
+    with ProgressBar():
+        ds_skill = ds_skill.compute()
+
+    ds_skill = ds_skill.assign_coords({"skill": skill_names})
+
     # Return the skill Dataset
     return ds_skill
 
