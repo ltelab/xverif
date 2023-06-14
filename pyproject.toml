@@ -9,12 +9,13 @@ authors = [
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<4.0"
 xarray = "^2023.4.2"
 dask = { extras = ["distributed"], version = "^2023.4.1" }
 numba = "^0.57.0"
 rechunker = "^0.5.1"
 flox = "^0.7.1"
+scoringrules = "^0.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
