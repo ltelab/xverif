@@ -25,6 +25,7 @@ pytest = "^7.3.1"
 ruff = "^0.0.265"
 black = "^23.3.0"
 pre-commit = "^3.3.1"
+graphviz = "^0.20.1"
 
 
 [tool.poetry.group.docs.dependencies]
