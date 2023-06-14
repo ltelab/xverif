@@ -51,9 +51,9 @@ pred1, obs1 = xr.broadcast(pred, obs)
 np.testing.assert_allclose(obs1.isel({"realization": 0})["var1"].data, obs1.isel({"realization":1})["var1"].data)
 
 # Align datasets
-from xverif.wrappers import align_datasets
+from xverif.wrappers import align_xarray_objects
 
-pred2, obs2 = align_datasets(pred, obs)
+pred2, obs2 = align_xarray_objects(pred, obs)
 
 
 # Compute deterministic skills (1 sample_dims)
