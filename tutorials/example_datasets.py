@@ -58,7 +58,11 @@ pred2, obs2 = align_xarray_objects(pred, obs)
 
 # Compute deterministic skills (1 sample_dims)
 import xverif
-from xverif.datasets import create_timeseries_dataset, create_timeseries_forecast_dataset
+from xverif.datasets import (
+    create_timeseries_dataset,
+    create_timeseries_forecast_dataset,
+)
+
 obs = create_timeseries_dataset(100)
 pred = create_timeseries_forecast_dataset(100)
 
@@ -78,7 +82,8 @@ ds_skills.to_array(dim="variables").to_dataset(dim="skill")
 
 # Compute deterministic skills (2 sample_dims)
 import xverif
-from xverif.datasets import create_spatial2d_dataset, create_ensemble_forecast_dataset
+from xverif.datasets import create_ensemble_forecast_dataset, create_spatial2d_dataset
+
 obs = create_spatial2d_dataset(15)
 pred = create_spatial2d_dataset(15)
 pred = create_ensemble_forecast_dataset(15)
@@ -98,7 +103,7 @@ ds_skills = xverif.deterministic(
     obs=obs,
     forecast_type="continuous",
     aggregating_dim=["x","y"],
-    implementation=implementation, 
+    implementation=implementation,
     skip_na=True,
     skip_infs=True,
     skip_zeros=True,
@@ -111,7 +116,7 @@ ds_skills = xverif.deterministic(
 # pred.shape
 # obs.shape
 
- 
+
 implementations = ["loop", "stacked", "ndarray"]
 
 for implementation in implementations:
@@ -121,14 +126,11 @@ for implementation in implementations:
         obs=obs,
         forecast_type="continuous",
         aggregating_dim=["x","y"],
-        implementation=implementation, 
+        implementation=implementation,
         skip_na=True,
         skip_infs=True,
         skip_zeros=True,
     )
-    
-     
- 
 
 
 
@@ -138,9 +140,12 @@ for implementation in implementations:
 
 
 
- 
- 
- 
+
+
+
+
+
+
 
 
 

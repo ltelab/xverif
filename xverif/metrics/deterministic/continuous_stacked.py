@@ -14,7 +14,6 @@ from xverif.preprocessing import _drop_nans
 from xverif.utils.timing import print_elapsed_time
 
 
-
 def get_aux_dims(pred, aggregating_dim):
     """Infer aux_dims from prediction dataset."""
     dims = list(pred.dims)
@@ -22,12 +21,12 @@ def get_aux_dims(pred, aggregating_dim):
     return aux_dims
 
 
-def get_stacking_dict(pred, aggregating_dim): 
+def get_stacking_dict(pred, aggregating_dim):
     """Get stacking dimension dictionary."""
     aux_dims = get_aux_dims(pred, aggregating_dim)
     stacking_dict =  {
-        'aux': aux_dims,
-        'sample': aggregating_dim,
+        "aux": aux_dims,
+        "sample": aggregating_dim,
     }
     return stacking_dict
 
@@ -226,23 +225,22 @@ def _xr_apply_routine(
 
     dims must be a tuple, unique values
     """
-    
-    # Broadcast obs to pred 
-    # - Creates a view, not a copy ! 
+    # Broadcast obs to pred
+    # - Creates a view, not a copy !
     obs_broadcasted = obs.broadcast_like(pred)
     # obs_broadcasted['var0'].data.flags # view (Both contiguous are False)
     # obs_broadcasted['var0'].data.base  # view (Return array and not None)
-    
+
     # Stack pred and obs to have 2D dimensions (aux, sample)
-    stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)     
+    stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)
     stacked_pred = pred.stack(stacking_dict)
     stacked_obs = obs_broadcasted.stack(stacking_dict)
-    
+
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
 
     # Define gufunc kwargs
-    input_core_dims = [['sample'], ['sample']]
+    input_core_dims = [["sample"], ["sample"]]
     dask_gufunc_kwargs = {
         "output_sizes":
             {
@@ -270,8 +268,8 @@ def _xr_apply_routine(
 
     # Add skill coordinates
     ds_skill = ds_skill.assign_coords({"skill": skill_names})
-    
-    # Unstack 
+
+    # Unstack
     ds_skill = ds_skill.unstack("aux")
 
     # Return the skill Dataset

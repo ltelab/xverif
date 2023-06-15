@@ -166,8 +166,8 @@ def deterministic(
     # pred, obs = xr.broadcast(pred, obs)
 
     # Retrieve xarray routine
-    _xr_routine = _get_xr_routine(metric_type="deterministic", 
-                                  forecast_type=forecast_type, 
+    _xr_routine = _get_xr_routine(metric_type="deterministic",
+                                  forecast_type=forecast_type,
                                   implementation=implementation)
 
     # Compute skills
