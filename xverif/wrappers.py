@@ -91,20 +91,44 @@ def _get_xr_routine(metric_type, forecast_type):
     return function
 
 
-def align_datasets(pred, obs):
-    """Align xarray Dataset.
+def ensure_common_xarray_format(pred, obs):
+    """Ensure common format. Either xr.DataArray or xr.Dataset."""
+    if not isinstance(pred, (xr.DataArray, xr.Dataset)):
+        raise TypeError("'pred' is not an xarray object.")
+    if not isinstance(obs, (xr.DataArray, xr.Dataset)):
+        raise TypeError("'obs' is not an xarray object.")
+    if isinstance(pred, xr.Dataset) and not isinstance(obs, xr.Dataset):
+        raise TypeError("Both input datasets must be xr.Dataset or xr.DataArray.")
+    if isinstance(pred, xr.DataArray) and not isinstance(obs, xr.DataArray):
+        raise TypeError("Both input datasets must be xr.Dataset or xr.DataArray.")
+    return pred, obs
+
+
+def ensure_dataarray(xr_obj):
+    """Convert xr.Dataset to DataArray.
+
+    It expects that 'variable' is not a dimension of the xr.Dataset
+    """
+    if isinstance(xr_obj, xr.Dataset):
+        if "variable" in list(xr_obj.dims):
+            raise ValueError("Please do not provide a xr.Dataset with a dimension named 'variable'.")
+        xr_obj = xr_obj.to_array(dim="variable")
+    return xr_obj
+
+
+def align_xarray_objects(pred, obs):
+    """Align xarray objects.
 
     - Ensure coordinate alignment for matching dimensions.
     - Ensure common subset of Dataset variables.
     """
-    # Align dataset dimensions
+    # Align xarray dimensions
     pred, obs = xr.align(pred, obs, join="inner")
 
-    # Align dataset variables
-    # TODO: check that both are xr.Dataset !
-    pred, obs = ensure_dataset_same_variables(pred, obs)
+    # Align xarray dataset variables
+    if isinstance(pred, xr.Dataset):
+        pred, obs = ensure_dataset_same_variables(pred, obs)
     return pred, obs
-
 
 
 def deterministic(
@@ -118,19 +142,27 @@ def deterministic(
     skip_zeros=True,
 ):
     """Compute deterministic skill metrics."""
-    # ------------------------------------------------------------------------.
     # Check input arguments
+    pred, obs = ensure_common_xarray_format(pred, obs)
     aggregating_dim = check_aggregating_dim(aggregating_dim)
     forecast_type = check_forecast_type(forecast_type)
 
     check_validity_aggregating_dim(aggregating_dim, pred)
     check_validity_aggregating_dim(aggregating_dim, obs)
 
-    # ------------------------------------------------------------------------.
-    # Align datasets
-    pred, obs = align_datasets(pred, obs)
+    # Check that obs dims is equal or subset of pred dims
+    # TODO:
 
-    ####----------------------------------------------------------------------.
+    # Reshape Datasets to DataArray
+    # pred = ensure_dataarray(pred)
+    # obs = ensure_dataarray(obs)
+
+    # Align Datasets
+    pred, obs = align_xarray_objects(pred, obs)
+
+    # Broadcast obs to pred
+    # pred, obs = xr.broadcast(pred, obs)
+
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(metric_type="deterministic", forecast_type=forecast_type)
 
