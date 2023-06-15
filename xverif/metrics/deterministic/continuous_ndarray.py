@@ -23,10 +23,10 @@ def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
     print(pred.shape)
     print(obs.shape)
     # TODO robust with median and IQR / MAD
-    
-    # Broadcast obs to pred 
-    obs = obs*np.ones_like(pred) 
-    
+
+    # Broadcast obs to pred
+    obs = obs*np.ones_like(pred)
+
     ##------------------------------------------------------------------------.
     # - Error
     error = pred - obs
@@ -119,9 +119,9 @@ def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
     #      # NSE,
     #      # KGE,
     #  ]
-    # for i, s in enumerate(list_skills): 
+    # for i, s in enumerate(list_skills):
     #     print(i, s.shape)
-        
+
     skills = np.stack(
         [
             pred_CoV,
@@ -208,8 +208,8 @@ def _xr_apply_routine(
     pred, obs, dims=("time"), **kwargs,
 ):
     """Compute deterministic continuous metrics.
-    
-    dims must be a tuple, unique values 
+
+    dims must be a tuple, unique values
     """
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
@@ -218,8 +218,8 @@ def _xr_apply_routine(
     n_dims = len(list(pred.dims))
     n_aggregating_dims = len(dims)
     axis = list(range(n_dims-n_aggregating_dims, n_dims))
-    kwargs.update({'axis': axis})
-   
+    kwargs.update({"axis": axis})
+
     # Define gufunc kwargs
     input_core_dims = [dims, dims]
     dask_gufunc_kwargs = {
@@ -228,7 +228,7 @@ def _xr_apply_routine(
                 "skill": len(skill_names),
              }
     }
-        
+
     # Apply ufunc
     ds_skill = xr.apply_ufunc(
         func,

@@ -75,17 +75,17 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
     rCoV = pred_CoV / obs_CoV
     diffCoV = pred_CoV - obs_CoV
     # - Correlation metrics
-    pearson_R, pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
-    pearson_R2 = pearson_R**2
+    # pearson_R, pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
+    # pearson_R2 = pearson_R**2
 
-    spearman_R, spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
-    spearman_R2 = spearman_R**2
+    # spearman_R, spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
+    # spearman_R2 = spearman_R**2
 
-    ##------------------------------------------------------------------------.
-    # - Overall skill metrics
-    LTM_forecast_error = ((obs_mean - obs) ** 2).sum()  # Long-term mean as prediction
-    NSE = 1 - (error_squared.sum() / (LTM_forecast_error + EPS))
-    KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
+    # ##------------------------------------------------------------------------.
+    # # - Overall skill metrics
+    # LTM_forecast_error = ((obs_mean - obs) ** 2).sum()  # Long-term mean as prediction
+    # NSE = 1 - (error_squared.sum() / (LTM_forecast_error + EPS))
+    # KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
 
     ##------------------------------------------------------------------------.
     skills = np.array(
@@ -113,15 +113,15 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
             rCoV,
             diffCoV,
             # Correlation
-            pearson_R,
-            pearson_R_pvalue,
-            pearson_R2,
-            spearman_R,
-            spearman_R_pvalue,
-            spearman_R2,
-            # Overall skill
-            NSE,
-            KGE,
+            # pearson_R,
+            # pearson_R_pvalue,
+            # pearson_R2,
+            # spearman_R,
+            # spearman_R_pvalue,
+            # spearman_R2,
+            # # Overall skill
+            # NSE,
+            # KGE,
         ]
     )
     return skills
@@ -154,15 +154,15 @@ def get_metrics_info():
         "rCoV",
         "diffCoV",
         # Correlation
-        "pearson_R",
-        "pearson_R_pvalue",
-        "pearson_R2",
-        "spearman_R",
-        "spearman_R_pvalue",
-        "spearman_R2",
-        # Overall skill
-        "NSE",
-        "KGE",
+        # "pearson_R",
+        # "pearson_R_pvalue",
+        # "pearson_R2",
+        # "spearman_R",
+        # "spearman_R_pvalue",
+        # "spearman_R2",
+        # # Overall skill
+        # "NSE",
+        # "KGE",
     ]
     return func, skill_names
 
