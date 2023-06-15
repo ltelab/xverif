@@ -55,13 +55,14 @@ def _check_metric_type(metric_type):
     return metric_type
 
 
-def _get_xr_routine(metric_type, forecast_type):
+def _get_xr_routine(metric_type, forecast_type, implementation="stacked"):
     """Retrieve xarray routine to compute the metrics."""
     # Check inputs
     forecast_type = _check_forecast_type(forecast_type)
     metric_type = _check_metric_type(metric_type)
     # Define module path
-    module_path = f"xverif.metrics.{metric_type}.{forecast_type}"
+    # TODO: module_path = f"xverif.metrics.{metric_type}.{forecast_type}
+    module_path = f"xverif.metrics.{metric_type}.{forecast_type}_{implementation}"
     # Import the module
     module = import_module(module_path)
     # Import the function
@@ -113,7 +114,8 @@ def deterministic(
     obs,
     forecast_type="continuous",
     aggregating_dim=None,
-    # TODO: to refactor name§
+    implementation="stacked",
+    # TODO: to refactor name
     skip_na=True,
     skip_infs=True,
     skip_zeros=True,
@@ -140,7 +142,9 @@ def deterministic(
 
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(
-        metric_type="deterministic", forecast_type=forecast_type
+        metric_type="deterministic",
+        forecast_type=forecast_type,
+        implementation=implementation,
     )
 
     # Compute skills
