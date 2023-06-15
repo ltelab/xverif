@@ -6,7 +6,8 @@ Created on Tue Jun 13 14:38:26 2023.
 @author: ghiggi
 """
 import numpy as np
-import scipy.stats
+
+# import scipy.stats
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from xverif import EPS

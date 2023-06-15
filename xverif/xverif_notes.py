@@ -17,8 +17,9 @@ Created on Sat Feb 27 15:51:43 2021.
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/interface.py
 
 ####--------------------------------------------------------------------------.
-#### Existing codes
-
+#################
+#### Metrics ####
+#################
 # Deterministic continuous
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/deterministic.py (xarray)
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py
@@ -37,16 +38,13 @@ Created on Sat Feb 27 15:51:43 2021.
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/ensscores.py
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/probscores.py
 
-
 # Probabilistic categorical
-
 
 # Distribution metrics
 
 # Spatial metrics
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/salscores.py
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/spatialscores.py
-
 
 # Hypothesis tests
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/stattests.py
@@ -59,8 +57,6 @@ Created on Sat Feb 27 15:51:43 2021.
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/resampling.py
 
 ####--------------------------------------------------------------------------.
-
-
 #### Preprocessing by chunk
 # - Point/Pixel-wise
 #   --> Preprocessing apply to each pixel timeseries separetely
@@ -72,43 +68,6 @@ Created on Sat Feb 27 15:51:43 2021.
 #   --> Or metrics deals with np.nan (but not efficient?)
 #   --> Or looping over dimensions with numba and avoid vectorization?
 
-#### Broadcast obs xarray to pred
-
-
-####--------------------------------------------------------------------------.
-#### Dataset preprocessing
-# --> Drop nans
-# --> Drop inf
-
-# Drop or masking operations for continuous verification
-# - Drop pairwise_equal_elements (i.e. 0)
-# - Keep only within a value range  (single conditions (or), double (and))
-#   --> Add option for multiple ranges ? >0.5, >30, >60
-#   --> If yes, means Dataset size changes
-# --> Dropping cause array size to change
-# --> Masking (with np.nan), not dropping nan and metric dealing with nan?
-
-
-#### Framework
-# - obs_dim ='time' by default
-# - If not interested in skills at each spatial location / ... collapse in unique dimension in advance
-
-# Loop over variables
-
-# Function broadcasting obs to pred ?
-
-# Apply ufunc
-# Function accepting N-Dimensional array
-# Function reshaping to NxK (K collapsed dimensions)
-# Function which loop over K dimensions
-# Function which compute
-# Function reshaping to skillxK
-
-# dask-map block over K dimension?
-
-# First dimension: observations (to reduce over)
-# --> axis
-# --> correlation?
 
 ####--------------------------------------------------------------------------.
 #### Dimension names
@@ -125,24 +84,32 @@ Created on Sat Feb 27 15:51:43 2021.
 # - dims present in only 1 dataset
 # - If obs to be broadcasted on pred (then become support_dims)
 
-# Objective
-# --> Transpose data to N x M  for vectorization
-# --> N=aggregating_dims,
-# --> M=aux_dims
-# --> K=broadcast_dims
+####--------------------------------------------------------------------------.
+##############
+#### TODO ####
+##############
+#### - Defaults choice
+# - aggregating_dim --> None?
+# - Change name of aggregating_dim
+# - Change name of sample and aux dimensions
 
-# --> Output array: skills x M (x K)
-
-
-# Obs can be
-# N x 1 (single pixel passed)
-# N x M (all pixels flattened out)
+####--------------------------------------------------------------------------.
+#### Daskify functions
 
 
 ####--------------------------------------------------------------------------.
-### Continuous verification
+#### Numba functions
 
-### Categorical verification
+
+####--------------------------------------------------------------------------.
+#### - Suppress warnings
+# - Division by 0
+
+# with suppress_warnings("invalid value encountered in true_divide"):
+#         with suppress_warnings("invalid value encountered in double_scalars"):
+
+####--------------------------------------------------------------------------.
+#### - Categorical verification
 # --> Binary or multiclass (separated)
 # --> If probababilities, add tool to predict classes using various probabilities (--> prob_threshold dimension)
 # --> Expect classes (0,1) or (0 to n) in metrics calculations
@@ -150,18 +117,29 @@ Created on Sat Feb 27 15:51:43 2021.
 # https://www.cawcr.gov.au/projects/verification/
 
 ####--------------------------------------------------------------------------.
-### Weights options
-
+#### - Weights options
 
 
 ####--------------------------------------------------------------------------.
-# pandas: example to_xarray for exploting xverif ...
+#### - pandas:
+# - example to_xarray for exploting xverif ...
+# - exploit stacked code ...
+
+####--------------------------------------------------------------------------.
+#### Dataset preprocessing
+# Preprocessing on stacked 2D array (per chunk within ufunc) or native Dataset ?
+# If loop over 1D, drop nan. If vectorize, need to use nanfunctions
 
 
+# --> Drop nans
+# --> Drop inf
+# Drop or masking operations for continuous verification
+# - Drop pairwise_equal_elements (i.e. 0)
+# - Keep only within a value range  (single conditions (or), double (and))
+#   --> Add option for multiple ranges ? >0.5, >30, >60
+#   --> If yes, means Dataset size changes
+# --> Dropping cause array size to change
+# --> Masking (with np.nan), not dropping nan and metric dealing with nan?
 
-
-
-
-
-
+####--------------------------------------------------------------------------.
 

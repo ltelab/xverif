@@ -19,8 +19,6 @@ def print_elapsed_time(task=""):
             execution_time = end_time - start_time
             timedelta_str = str(datetime.timedelta(seconds=execution_time))
             print(f" Elapsed time for {task} verification: {timedelta_str} .", end="\n")
-            msg = msg = "-" * 69
-            print(msg)
             return results
 
         return wrapper

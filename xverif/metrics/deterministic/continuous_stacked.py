@@ -6,11 +6,13 @@ Created on Tue Jun 13 14:38:26 2023.
 @author: ghiggi
 """
 import numpy as np
-import scipy.stats
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from xverif import EPS
-from xverif.preprocessing import _drop_nans
+from xverif.metrics.deterministic.correlations import (
+    __pearson_corr_coeff,
+    _spearman_corr_coeff,
+)
 from xverif.utils.timing import print_elapsed_time
 
 
@@ -31,21 +33,35 @@ def get_stacking_dict(pred, aggregating_dim):
     return stacking_dict
 
 
-
-def _get_metrics(pred, obs, skip_na=True, **kwargs):
-    """Deterministic metrics for continuous predictions forecasts.
-
-    This function expects pred and obs to be 1D vector of same size
+def _get_metrics(pred, obs, **kwargs):
     """
-    print(pred.shape)
-    print(obs.shape)
-    # TODO robust with median and IQR / MAD
+    Deterministic metrics for continuous predictions forecasts.
 
+    Parameters
+    ----------
+    pred : np.ndarray
+        2D prediction array of shape (aux, sample)
+        The columns corresponds to the sample predictions to be used
+        to compute the metrics (for each row).
+    obs : TYPE
+        2D observation array with same shape as pred: (aux, sample).
+        The columns corresponds to the sample observations to be used
+        to compute the metrics (for each row).
+
+
+    Returns
+    -------
+    skills : np.ndarray
+        A 2D array of shape (aux, n_skills).
+
+    """
     ##------------------------------------------------------------------------.
     # - Error
     error = pred - obs
     error_squared = error**2
+    error_abs = np.abs(error)
     error_perc = error / (obs + EPS)
+
     ##------------------------------------------------------------------------.
     # - Mean
     pred_mean = pred.mean(axis=1)
@@ -56,15 +72,17 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
     pred_std = pred.std(axis=1)
     obs_std = obs.std(axis=1)
     error_std = error.std(axis=1)
+
     ##------------------------------------------------------------------------.
     # - Coefficient of variability
     pred_CoV = pred_std / (pred_mean + EPS)
     obs_CoV = obs_std / (obs_mean + EPS)
     error_CoV = error_std / (error_mean + EPS)
+
     ##------------------------------------------------------------------------.
     # - Magnitude metrics
     BIAS = error_mean
-    MAE = np.abs(error).mean(axis=1)
+    MAE = error_abs.mean(axis=1)
     MSE = error_squared.mean(axis=1)
     RMSE = np.sqrt(MSE)
 
@@ -75,72 +93,49 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
     relMAE = MAE / (obs_mean + EPS)
     relMSE = MSE / (obs_mean + EPS)
     relRMSE = RMSE / (obs_mean + EPS)
+
     ##------------------------------------------------------------------------.
     # - Average metrics
     rMean = pred_mean / (obs_mean + EPS)
     diffMean = pred_mean - obs_mean
+
     ##------------------------------------------------------------------------.
     # - Variability metrics
     rSD = pred_std / (obs_std + EPS)
     diffSD = pred_std - obs_std
     rCoV = pred_CoV / obs_CoV
     diffCoV = pred_CoV - obs_CoV
-    # # - Correlation metrics
-    # pearson_R, pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
-    # pearson_R2 = pearson_R**2
 
-    # spearman_R, spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
-    # spearman_R2 = spearman_R**2
+    # - Correlation metrics
+    pearson_R = __pearson_corr_coeff(x=pred,
+                                     y=obs,
+                                     mean_x=pred_mean,
+                                     mean_y=obs_mean,
+                                     std_x=pred_std,
+                                     std_y=obs_std)
+    pearson_R2 = pearson_R**2
+    spearman_R = _spearman_corr_coeff(x=pred,
+                                      y=obs)
+    spearman_R2 = spearman_R**2
 
-    # ##------------------------------------------------------------------------.
-    # # - Overall skill metrics
-    # LTM_forecast_error = ((obs_mean - obs) ** 2).sum()  # Long-term mean as prediction
-    # NSE = 1 - (error_squared.sum() / (LTM_forecast_error + EPS))
-    # KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
+    # pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
+    # spearman_R_pvalue = scipy.stats.spearmanr(pred, obs)
 
     ##------------------------------------------------------------------------.
-    # list_skills =  [
-    #      pred_CoV,
-    #      obs_CoV,
-    #      error_CoV,
-    #      # Magnitude
-    #      BIAS,
-    #      MAE,
-    #      MSE,
-    #      RMSE,
-    #      percBIAS,
-    #      percMAE,
-    #      relBIAS,
-    #      relMAE,
-    #      relMSE,
-    #      relRMSE,
-    #      # Average
-    #      rMean,
-    #      diffMean,
-    #      # Variability
-    #      rSD,
-    #      diffSD,
-    #      rCoV,
-    #      diffCoV,
-    #      # Correlation
-    #      # pearson_R,
-    #      # pearson_R_pvalue,
-    #      # pearson_R2,
-    #      # spearman_R,
-    #      # spearman_R_pvalue,
-    #      # spearman_R2,
-    #      # # Overall skill
-    #      # NSE,
-    #      # KGE,
-    #  ]
-    # for i, s in enumerate(list_skills):
-    #     print(i, s.shape)
+    # - Overall skill metrics
+    obs_diff_from_ltm_mean = np.expand_dims(obs_mean, axis=1) - obs
+    factor = (obs_diff_from_ltm_mean ** 2).sum(axis=1)
+    sum_error_squared = error_squared.sum(axis=1)
+    NSE = 1 - (sum_error_squared / (factor + EPS))
+    KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
 
+    ##------------------------------------------------------------------------.
     skills = np.stack(
         [
             pred_CoV,
             obs_CoV,
             error_CoV,
+
             # Magnitude
             BIAS,
             MAE,
@@ -152,28 +147,30 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
             relMAE,
             relMSE,
             relRMSE,
+
             # Average
             rMean,
             diffMean,
+
             # Variability
             rSD,
             diffSD,
             rCoV,
             diffCoV,
+
             # Correlation
-            # pearson_R,
+            pearson_R,
+            pearson_R2,
+            spearman_R,
+            spearman_R2,
             # pearson_R_pvalue,
-            # pearson_R2,
-            # spearman_R,
             # spearman_R_pvalue,
-            # spearman_R2,
-            # # Overall skill
-            # NSE,
-            # KGE,
+
+            # Overall skill
+            NSE,
+            KGE,
         ], axis = -1
     )
-    print(skills.shape)
-    print("----")
     return skills
 
 
@@ -204,15 +201,16 @@ def get_metrics_info():
         "rCoV",
         "diffCoV",
         # Correlation
-        # "pearson_R",
+        "pearson_R",
+        "pearson_R2",
+        "spearman_R",
+        "spearman_R2",
         # "pearson_R_pvalue",
-        # "pearson_R2",
-        # "spearman_R",
         # "spearman_R_pvalue",
-        # "spearman_R2",
+
         # Overall skill
-        # "NSE",
-        # "KGE",
+        "NSE",
+        "KGE",
     ]
     return func, skill_names
 
@@ -221,9 +219,15 @@ def get_metrics_info():
 def _xr_apply_routine(
     pred, obs, dims=("time"), **kwargs,
 ):
-    """Compute deterministic continuous metrics.
+    """Routine to compute metrics in a vectorized way.
 
-    dims must be a tuple, unique values
+    The input xarray objects are first stacked to have 2D dimensions: (aux, sample).
+    Then custom preprocessing is applied to deal with NaN, non-finite values,
+    samples with equals values (i.e. 0) or samples outside specific value ranges.
+    The resulting array is then passed to the function computing the metrics.
+
+    Each chunk of the xr.DataArray is processed in parallel using dask, and the
+    results recombined using xr.apply_ufunc.
     """
     # Broadcast obs to pred
     # - Creates a view, not a copy !
@@ -255,7 +259,7 @@ def _xr_apply_routine(
         stacked_obs,
         kwargs=kwargs,
         input_core_dims=input_core_dims,
-        output_core_dims=[["skill"]],  # returned data has one dimension
+        output_core_dims=[["skill"]],
         vectorize=False,
         dask="parallelized",
         dask_gufunc_kwargs=dask_gufunc_kwargs,

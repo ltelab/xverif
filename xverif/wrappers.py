@@ -40,10 +40,19 @@ def ensure_dataset_same_variables(pred, obs):
     return pred, obs
 
 
-def check_aggregating_dim(aggregating_dim):
+def check_aggregating_dim(aggregating_dim, obs):
     """Check aggregating_dims format."""
+    if not isinstance(aggregating_dim, (type(None), list, tuple)):
+        raise TypeError("'aggregatings_dims' must be a str, list, tuple or None.")
     if isinstance(aggregating_dim, str):
         aggregating_dim = [aggregating_dim]
+    else:
+        # Set defaults di
+        dims = list(obs.dims)
+        if isinstance(aggregating_dim, type(None)):
+            aggregating_dim = dims
+        if len(aggregating_dim) == 0:
+            aggregating_dim = dims
     return aggregating_dim
 
 
@@ -146,7 +155,7 @@ def deterministic(
     """Compute deterministic skill metrics."""
     # Check input arguments
     pred, obs = ensure_common_xarray_format(pred, obs)
-    aggregating_dim = check_aggregating_dim(aggregating_dim)
+    aggregating_dim = check_aggregating_dim(aggregating_dim, obs)
     forecast_type = check_forecast_type(forecast_type)
 
     check_validity_aggregating_dim(aggregating_dim, pred)
@@ -155,15 +164,16 @@ def deterministic(
     # Check that obs dims is equal or subset of pred dims
     # TODO:
 
-    # Reshape Datasets to DataArray
-    # pred = ensure_dataarray(pred)
-    # obs = ensure_dataarray(obs)
+    # Check homogenous datasets
+    # TODO: and suggest function that return list of homogenous datasets !
 
     # Align Datasets
     pred, obs = align_xarray_objects(pred, obs)
 
-    # Broadcast obs to pred
-    # pred, obs = xr.broadcast(pred, obs)
+    # Convert Dataset to DataArray
+    # - Enable to vectorize also over variables if numpy
+    pred = ensure_dataarray(pred)
+    obs = ensure_dataarray(obs)
 
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(metric_type="deterministic",

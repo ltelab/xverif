@@ -88,6 +88,10 @@ obs = create_spatial2d_dataset(15)
 pred = create_spatial2d_dataset(15)
 pred = create_ensemble_forecast_dataset(15)
 
+# obs = create_spatial2d_dataset(1000)
+# pred = create_spatial2d_dataset(1000)
+# pred = create_ensemble_forecast_dataset(1000)
+
 forecast_type="continuous"
 aggregating_dim=["x","y"]
 dims=aggregating_dim
@@ -95,8 +99,7 @@ skip_na=True
 skip_infs=True
 skip_zeros=True
 kwargs = {}
-# kwargs = {'axis': [3,4]}
-implementation = "loop"
+implementation = "stacked"
 
 ds_skills = xverif.deterministic(
     pred=pred,
@@ -133,6 +136,29 @@ for implementation in implementations:
     )
 
 
+###----------------------------------------------------------------------------
+### DEBUG of stacked code
+# from xverif.metrics.deterministic.continuous_stacked import get_stacking_dict
+# obs_broadcasted = obs.broadcast_like(pred)
+# stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)
+# stacked_pred = pred.stack(stacking_dict)
+# stacked_obs = obs_broadcasted.stack(stacking_dict)
+# pred = stacked_pred['var0'].data
+# obs = stacked_obs['var1'].data
+
+
+### Continuous verification
+# TODO robust with median and IQR / MAD
+# - scatter
+# - smape: https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L802
+# - mape: https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/deterministic.py#L1215
+# - add n_obs
+
+###---------------------------------------------------------------------------.
+# preprocessor
+
+
+# Loop over variables
 
 
 
@@ -141,45 +167,3 @@ for implementation in implementations:
 
 
 
-
-
-
-
-
-
-
-
-# if aggregating_dim=None, set all the non broadcasting_dims
-
-
-# input (x,y, time)
-# aggregating_dims = ('x','y')
-# vectorize=True,  core_dims=['x','y'] --> arr shape (x, y)
-# vectorize=False, core_dims=['x','y'] --> arr shape (time, x, y)  (aggregating dims moved to output position)
-
-# vectorize=True
-# --> Loopa su ognuna delle dimensioni non-core_dims (aggregating dims)
-# --> Passa alla funzione sottostante l'array con core_dims ... e basta fare flatten per processarlo
-
-# vectorize=False
-
-# Input
-(15, 24, 48, 10, 10)
-
-# Collapse sample_dims
-(15, 24, 48, 10*10)
-
-# Output corr
-(15, 24, 48, 1)
-
-#---------------------------------------------------------------------------.
-
-
-
-
-
-
-### TODO
-# - reshaping
-# - transposing
-# - stack variables

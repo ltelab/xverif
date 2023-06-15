@@ -6,11 +6,9 @@ Created on Tue Jun 13 14:38:26 2023.
 @author: ghiggi
 """
 import numpy as np
-import scipy.stats
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from xverif import EPS
-from xverif.preprocessing import _drop_nans
 from xverif.utils.timing import print_elapsed_time
 
 
@@ -20,9 +18,6 @@ def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
     This function expects pred and obs to be 1D vector of same size
     """
     axis = tuple(axis)
-    print(pred.shape)
-    print(obs.shape)
-    # TODO robust with median and IQR / MAD
 
     # Broadcast obs to pred
     obs = obs*np.ones_like(pred)
@@ -158,8 +153,6 @@ def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
             # KGE,
         ], axis = -1
     )
-    print(skills.shape)
-    print("----")
     return skills
 
 
