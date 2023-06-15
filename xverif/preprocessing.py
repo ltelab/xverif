@@ -112,6 +112,27 @@ def _drop_pairwise_elements(a, b, weights=None, element=0):
     return a, b, weights
 
 
+def time_at_inittime_leadtime(
+    obj: xr.DataArray | xr.Dataset,
+    init_time_name: str = "forecast_reference_time",
+    lead_time_name: str = "lead_time",
+):
+    """Compute a 2d array of the actual time given the initialization and lead times."""
+    reftime = obj[init_time_name].values
+    leadtime = obj[lead_time_name].values
+
+    if (dtype := leadtime.dtype) != np.dtype("timedelta64[ns]"):
+        raise ValueError(
+            f"{lead_time_name} coordinate must be of dtype 'np.timedelta' but is {dtype}"
+        )
+
+    return xr.DataArray(
+        reftime[:, None] + leadtime[None],
+        coords={init_time_name: reftime, lead_time_name: leadtime},
+        dims=[init_time_name, lead_time_name],
+    )
+
+
 def temporal_broadcast_observations(
     obs: xr.DataArray | xr.Dataset,
     fcts: xr.DataArray | xr.Dataset,
@@ -146,23 +167,11 @@ def temporal_broadcast_observations(
     -------
     obs: xr.DataArray or xr.Dataset
     """
-    reftime = fcts[fcts_init_time_name].values
-    leadtime = fcts[fcts_lead_time_name].values
-
-    if (dtype := leadtime.dtype) != np.dtype("timedelta64[ns]"):
-        raise ValueError(
-            f"{fcts_lead_time_name} coordinate must be of dtype 'np.timedelta' but is {dtype}"
-        )
-
-    indexer = xr.DataArray(
-        reftime[:, None] + leadtime[None],
-        coords={fcts_init_time_name: reftime, fcts_lead_time_name: leadtime},
-        dims=[fcts_init_time_name, fcts_lead_time_name],
-    )
-
+    indexer = time_at_inittime_leadtime(fcts, fcts_init_time_name, fcts_lead_time_name)
     try:
         obs = obs.sel({obs_time_name: indexer})
     except KeyError:
         obs = obs.reindex(time=np.unique(indexer.values.reshape(-1)))
         obs = obs.sel(time=indexer)
-    return obs
+    fcts = fcts.assign_coords({obs_time_name: indexer})
+    return obs, fcts
