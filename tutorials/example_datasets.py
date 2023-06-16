@@ -84,13 +84,12 @@ ds_skills.to_array(dim="variables").to_dataset(dim="skill")
 import xverif
 from xverif.datasets import create_ensemble_forecast_dataset, create_spatial2d_dataset
 
-obs = create_spatial2d_dataset(15)
-pred = create_spatial2d_dataset(15)
-pred = create_ensemble_forecast_dataset(15)
+# obs = create_spatial2d_dataset(15)
+# pred = create_spatial2d_dataset(15)
+# pred = create_ensemble_forecast_dataset(15)
 
-# obs = create_spatial2d_dataset(1000)
-# pred = create_spatial2d_dataset(1000)
-# pred = create_ensemble_forecast_dataset(1000)
+obs = create_spatial2d_dataset(1000)
+pred = create_ensemble_forecast_dataset(1000)
 
 forecast_type="continuous"
 aggregating_dim=["x","y"]
@@ -141,26 +140,12 @@ for implementation in implementations:
 # from xverif.metrics.deterministic.continuous_stacked import get_stacking_dict
 # obs_broadcasted = obs.broadcast_like(pred)
 # stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)
-# stacked_pred = pred.stack(stacking_dict)
-# stacked_obs = obs_broadcasted.stack(stacking_dict)
-# pred = stacked_pred['var0'].data
-# obs = stacked_obs['var1'].data
+# pred = pred.stack(stacking_dict)
+# obs = obs_broadcasted.stack(stacking_dict)
 
 
-### Continuous verification
-# TODO robust with median and IQR / MAD
-# - scatter
-# - smape: https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L802
-# - mape: https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/deterministic.py#L1215
-# - add n_obs
-
-###---------------------------------------------------------------------------.
-# preprocessor
-
-
-# Loop over variables
-
-
+# pred = pred.data
+# obs = obs.data
 
 
 

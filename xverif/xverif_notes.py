@@ -25,6 +25,7 @@ Created on Sat Feb 27 15:51:43 2021.
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/detcontscores.py
 # - https://xskillscore.readthedocs.io/en/stable/api/xskillscore.pearson_r_eff_p_value.html
+# - https://github.com/hzambran/hydroGOF/tree/master/R
 # --> Tests: https://github.com/pySTEPS/pysteps/blob/master/pysteps/tests/test_verification_detcontscores.py
 
 # Deterministic categorical
@@ -105,6 +106,9 @@ Created on Sat Feb 27 15:51:43 2021.
 #### - Suppress warnings
 # - Division by 0
 
+# RuntimeWarning: Degrees of freedom <= 0 for slice   (when all np.nan in nanstd)
+
+# suppress_warnings("All-NaN slice encountered")
 # with suppress_warnings("invalid value encountered in true_divide"):
 #         with suppress_warnings("invalid value encountered in double_scalars"):
 
@@ -119,6 +123,10 @@ Created on Sat Feb 27 15:51:43 2021.
 ####--------------------------------------------------------------------------.
 #### - Weights options
 
+####--------------------------------------------------------------------------.
+#### Skill scores
+# - reference ...
+# - persistence, climatology, ...
 
 ####--------------------------------------------------------------------------.
 #### - pandas:
@@ -141,5 +149,86 @@ Created on Sat Feb 27 15:51:43 2021.
 # --> Dropping cause array size to change
 # --> Masking (with np.nan), not dropping nan and metric dealing with nan?
 
-####--------------------------------------------------------------------------.
 
+# conditioning: {None, "single", "double"}, optional
+# The type of conditioning used for the verification.
+# The default, conditioning=None, includes all pairs. With
+# conditioning="single", only pairs with either pred or obs > thr are
+# included. With conditioning="double", only pairs with both pred and
+# obs > thr are included.
+
+####--------------------------------------------------------------------------.
+#### Continuous verification
+# TODO robust with median and IQR / MAD
+# - scatter
+# - smape: https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L802
+# - mape: https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/deterministic.py#L1215
+# - add n_obs
+
+# epsilon is an arbitrary small yet strictly positive number to avoid undefined results when ``a`` is zero.
+
+#### xskillscore
+#   Mean Absolute Percentage Error
+# -   Percent error is reported as decimal percent (1-100)
+# epsilon = np.finfo(np.float64).eps
+# mape = np.abs(error) / np.maximum(np.absolute(obs), epsilon)
+
+# # Symmetric Mean Absolute Percentage Error
+# smape = np.absolute(error) / (np.absolute(obs) + np.absolute(pred))
+
+# # Median Absolute Error
+# rob_MAE = np.median(np.absolute(error))
+
+#### pysteps
+# NMSE normalized mean squared error
+# E[(pred - obs)^2]/E[(pred + obs)^2].
+# --> NMSE = MSE / (pred + obs) ** 2
+
+# DRMSE debiased root mean squared error
+# DRMSE = np.sqrt(MSE - BIAS**2)
+
+
+# beta (slope linear regression model)
+# - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L162
+
+# beta1 (degree of conditional bias of the observations given the forecasts (type 1)
+# beta2  (degree of conditional bias of the forecasts given the observation (type 2)
+
+# robust option --> mean --> median , std --> mad
+
+# diffMedian
+# rMedian
+
+# diffMAD  (median absolute deviation)
+# rMAD
+
+# rob_obs_CoV (MAD/median)
+# rob_pred_CoV (MAD/median)
+# rob_diffCoV
+
+# relBIAS (BIAS/obs_mean)
+
+# rob_BIAS (median(error)
+# rob_relBIAS:  robBIAS/obs_median
+
+# relMAE  (MAE/obs_mean)
+# rob_MAE  (median(abs(error)))
+# rob_relMAE  robMAE/obs_median
+
+# relMSE
+# rob_MSE
+# rob_relMSE
+
+
+# err_AC1 k=1
+# err_AC2 k=2: error autocorrelation at lag ...
+
+####--------------------------------------------------------------------------.
+### Categorical
+# - Gerriity skill Score
+# --> https://rdrr.io/github/joaofgoncalves/SegOptim/man/GerritySkillScore.html
+# --> https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/contingency.py#L735
+# --> https://www.ecmwf.int/sites/default/files/elibrary/2010/11988-new-equitable-score-suitable-verifying-precipitation-nwp.pdf
+
+# Add np.log10 everywhere !!!
+# - In categorical skills
