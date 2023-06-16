@@ -33,7 +33,7 @@ def get_stacking_dict(pred, aggregating_dim):
     return stacking_dict
 
 
-def _get_metrics(pred, obs, **kwargs):
+def _get_metrics(pred: np.ndarray, obs: np.ndarray, **kwargs) -> np.ndarray:
     """
     Deterministic metrics for continuous predictions forecasts.
 
@@ -64,55 +64,68 @@ def _get_metrics(pred, obs, **kwargs):
 
     ##------------------------------------------------------------------------.
     # - Mean
-    pred_mean = pred.mean(axis=1)
-    obs_mean = obs.mean(axis=1)
-    error_mean = error.mean(axis=1)
+    pred_Mean = pred.nanmean(axis=1)
+    obs_Mean = obs.nanmean(axis=1)
+    error_Mean = error.nanmean(axis=1)
     ##------------------------------------------------------------------------.
     # - Standard deviation
-    pred_std = pred.std(axis=1)
-    obs_std = obs.std(axis=1)
-    error_std = error.std(axis=1)
+    pred_SD = pred.nanstd(axis=1)
+    obs_SD = obs.nanstd(axis=1)
+    error_SD = error.nanstd(axis=1)
+    ##------------------------------------------------------------------------.
+    # Spread
+    # - Scatter
+    # --> Half the distance between the 16% and 84% percentiles with error dB(pred/obs)
+
+    # TODO: check
+    # error_db = 10 * np.log10(pred / (obs + EPS))
+    # q16, q84 = np.nanquantiles(error_db, q=[0.16, 0.25, 0.75, 0.84], axis=1)
+    # SCATTER = (q84 - q16) / 2.0
+
+    # # - IQR
+    # q25, q75 = np.nanquantiles(error, q=[0.25, 0.75], axis=1)
+    # IQR = q75 - q25
 
     ##------------------------------------------------------------------------.
     # - Coefficient of variability
-    pred_CoV = pred_std / (pred_mean + EPS)
-    obs_CoV = obs_std / (obs_mean + EPS)
-    error_CoV = error_std / (error_mean + EPS)
+    pred_CoV = pred_SD / (pred_Mean + EPS)
+    obs_CoV = obs_SD / (obs_Mean + EPS)
+    error_CoV = error_SD / (error_Mean + EPS)
 
     ##------------------------------------------------------------------------.
     # - Magnitude metrics
-    BIAS = error_mean
-    MAE = error_abs.mean(axis=1)
-    MSE = error_squared.mean(axis=1)
+    BIAS = error_Mean
+    MAE = error_abs.nanmean(axis=1)
+    MSE = error_squared.nanmean(axis=1)
     RMSE = np.sqrt(MSE)
 
-    percBIAS = error_perc.mean(axis=1) * 100
-    percMAE = np.abs(error_perc).mean(axis=1) * 100
+    percBIAS = error_perc.nanmean(axis=1) * 100
+    percMAE = np.abs(error_perc).nanmean(axis=1) * 100
 
-    relBIAS = BIAS / (obs_mean + EPS)
-    relMAE = MAE / (obs_mean + EPS)
-    relMSE = MSE / (obs_mean + EPS)
-    relRMSE = RMSE / (obs_mean + EPS)
+    relBIAS = BIAS / (obs_Mean + EPS)
+    relMAE = MAE / (obs_Mean + EPS)
+    relMSE = MSE / (obs_Mean + EPS)
+    relRMSE = RMSE / (obs_Mean + EPS)
 
     ##------------------------------------------------------------------------.
     # - Average metrics
-    rMean = pred_mean / (obs_mean + EPS)
-    diffMean = pred_mean - obs_mean
+    rMean = pred_Mean / (obs_Mean + EPS)
+    diffMean = pred_Mean - obs_Mean
 
     ##------------------------------------------------------------------------.
     # - Variability metrics
-    rSD = pred_std / (obs_std + EPS)
-    diffSD = pred_std - obs_std
+    rSD = pred_SD / (obs_SD + EPS)
+    diffSD = pred_SD - obs_SD
     rCoV = pred_CoV / obs_CoV
     diffCoV = pred_CoV - obs_CoV
 
     # - Correlation metrics
     pearson_R = __pearson_corr_coeff(x=pred,
                                      y=obs,
-                                     mean_x=pred_mean,
-                                     mean_y=obs_mean,
-                                     std_x=pred_std,
-                                     std_y=obs_std)
+                                     mean_x=pred_Mean,
+                                     mean_y=obs_Mean,
+                                     std_x=pred_SD,
+                                     std_y=obs_SD)
     pearson_R2 = pearson_R**2
     spearman_R = _spearman_corr_coeff(x=pred,
                                       y=obs)
@@ -123,11 +136,21 @@ def _get_metrics(pred, obs, **kwargs):
 
     ##------------------------------------------------------------------------.
     # - Overall skill metrics
-    obs_diff_from_ltm_mean = np.expand_dims(obs_mean, axis=1) - obs
-    factor = (obs_diff_from_ltm_mean ** 2).sum(axis=1)
-    sum_error_squared = error_squared.sum(axis=1)
-    NSE = 1 - (sum_error_squared / (factor + EPS))
+    # - Nash Sutcliffe efficiency / Reduction of variance
+    # - --> 1 - MSE/Var(obs)
+    NSE = 1 - (error_squared.nansum(axis=1) / (((obs - np.expand_dims(obs_Mean, axis=1)) ** 2).nansum(axis=1) + EPS))
+
+    # - Klinga Gupta Efficiency Score
     KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
+
+    # - Modified Index of Agreement (Wilmott et al., 1981)
+    # https://search.r-project.org/CRAN/refmans/hydroGOF/html/md.html
+    # https://www.nature.com/articles/srep19401 --> IoA_Gallo
+    # --> TODO: j1, j2, j3
+    # j = 1
+    # denominator = ((np.abs((np.expand_dims(obs_Mean, axis=1) - obs)) +
+    #                 np.abs((np.expand_dims(obs_Mean, axis=1) - pred))) ** j).nansum(axis=1)
+    # mIoA = 1 - (error ** j).nansum(axis=1) / (denominator + EPS)
 
     ##------------------------------------------------------------------------.
     skills = np.stack(
@@ -163,12 +186,15 @@ def _get_metrics(pred, obs, **kwargs):
             pearson_R2,
             spearman_R,
             spearman_R2,
+
             # pearson_R_pvalue,
             # spearman_R_pvalue,
 
             # Overall skill
             NSE,
             KGE,
+
+            # IoA,
         ], axis = -1
     )
     return skills
@@ -178,6 +204,11 @@ def get_metrics_info():
     """Get metrics information."""
     func = _get_metrics
     skill_names = [
+        "obs_Mean",
+        "pred_Mean",
+        "obs_SD",
+        "pred_SD",
+        "error_SD",
         "pred_CoV",
         "obs_CoV",
         "error_CoV",
@@ -231,14 +262,15 @@ def _xr_apply_routine(
     """
     # Broadcast obs to pred
     # - Creates a view, not a copy !
-    obs_broadcasted = obs.broadcast_like(pred)
+    obs = obs.broadcast_like(pred)
     # obs_broadcasted['var0'].data.flags # view (Both contiguous are False)
     # obs_broadcasted['var0'].data.base  # view (Return array and not None)
 
     # Stack pred and obs to have 2D dimensions (aux, sample)
+    # - This operation doubles the memory
     stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)
-    stacked_pred = pred.stack(stacking_dict)
-    stacked_obs = obs_broadcasted.stack(stacking_dict)
+    pred = pred.stack(stacking_dict)
+    obs = obs.stack(stacking_dict)
 
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
@@ -255,8 +287,8 @@ def _xr_apply_routine(
     # Apply ufunc
     ds_skill = xr.apply_ufunc(
         func,
-        stacked_pred,
-        stacked_obs,
+        pred,
+        obs,
         kwargs=kwargs,
         input_core_dims=input_core_dims,
         output_core_dims=[["skill"]],
