@@ -7,17 +7,42 @@ Created on Thu Jun 15 09:59:26 2023.
 """
 import numpy as np
 
-try:
-    from bottleneck import nanrankdata as rankdata
-except ImportError:
-    from scipy.stats import rankdata
+
+def np_rankdata(x: np.ndarray, axis: int=-1):
+    """Rank data using numpy.
+
+    Avoids using argsort 2 times.
+    """
+    in_shape = x.shape
+    tmp = np.argsort(x, axis=-1).reshape(-1, in_shape[axis])
+    rank = np.empty_like(tmp, dtype="float64")
+    np.put_along_axis(rank, tmp, np.arange(1, in_shape[axis] + 1), axis=axis)
+    del tmp
+    rank = rank.reshape(in_shape)
+    return rank
 
 
+# try:
+#     from bottleneck import nanrankdata as rankdata
+# except ImportError:
+#     from scipy.stats import rankdata
+
+### Ranks benchmarks
+# import bottleneck
 # import scipy.stats
 # arr = np.arange(0, 100_000_000).reshape(10_000,10_000)
-# %timeit scipy.stats.rankdata(arr, axis=1)
-# %timeit bottleneck.rankdata(arr, axis=1)
 
+# %timeit arr.argsort(axis=1).argsort(axis=1) + 1
+# %timeit np_rankdata(arr, axis=1)
+# %timeit bottleneck.rankdata(arr, axis=1)
+# %timeit scipy.stats.rankdata(arr, axis=1)
+
+# x = np.array([np.nan, np.nan, 5, 4])
+# x.argsort().argsort() + 1
+# np_rankdata(x)
+# bottleneck.rankdata(x)
+# bottleneck.nanrankdata(x)
+# scipy.stats.rankdata(x)
 
 # pvalues
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L319
@@ -27,8 +52,8 @@ except ImportError:
 
 
 def __pearson_corr_coeff(x, y,
-                        mean_x, mean_y,
-                        std_x, std_y):
+                         mean_x, mean_y,
+                         std_x, std_y):
     """
     Compute the Pearson Correlation Coefficient between pairwise columns.
 
@@ -56,25 +81,18 @@ def __pearson_corr_coeff(x, y,
         Correlation coefficient with shape (aux,)
 
     """
-    # Compute the means of x and y
-    # mean_x = np.mean(x, axis=1)
-    # mean_y = np.mean(y, axis=1)
-
-    # # Compute the standard deviations of x and y
-    # std_x = np.std(x, axis=1)
-    # std_y = np.std(y, axis=1)
-
     mean_x = np.expand_dims(mean_x, axis=1)
     mean_y = np.expand_dims(mean_y, axis=1)
 
     # Compute the covariance between x and y
-    cov = np.mean((x - mean_x) * (y - mean_y), axis=1)
+    cov = np.nanmean((x - mean_x) * (y - mean_y), axis=1)
 
     # Compute the correlation coefficient
     corr = cov / (std_x * std_y)
 
     # Clip to avoid numerical artefacts
     corr = np.clip(corr, -1, 1)
+
     return corr
 
 
@@ -98,20 +116,11 @@ def _pearson_corr_coeff(x, y):
         Correlation coefficient with shape (aux,)
 
     """
-    # Compute the means of x and y
-    mean_x = np.mean(x, axis=1)
-    mean_y = np.mean(y, axis=1)
-
-    # Compute the standard deviations of x and y
-    std_x = np.std(x, axis=1)
-    std_y = np.std(y, axis=1)
-
-    # Compute Pearson correlation cofficient
     corr = __pearson_corr_coeff(x=x, y=y,
-                                mean_x=mean_x,
-                                mean_y=mean_y,
-                                std_x=std_x,
-                                std_y=std_y)
+                                mean_x=np.nanmean(x, axis=1),
+                                mean_y=np.nanmean(y, axis=1),
+                                std_x=np.nanstd(x, axis=1),
+                                std_y=np.nanstd(y, axis=1))
     return corr
 
 
@@ -135,11 +144,8 @@ def _spearman_corr_coeff(x, y):
         Correlation coefficient with shape (aux,)
 
     """
-    # Compute rank data
-    x_rank = rankdata(x, axis=1)
-    y_rank = rankdata(y, axis=1)
-
-    # Compute Spearman correlation cofficient
-    corr = _pearson_corr_coeff(x=x_rank, y=y_rank)
+    # TODO: implement np.nan_rankdata (now is wrong)
+    corr = _pearson_corr_coeff(x=np_rankdata(x, axis=1),
+                               y=np_rankdata(y, axis=1))
     return corr
 
