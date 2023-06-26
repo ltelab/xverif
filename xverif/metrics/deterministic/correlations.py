@@ -5,27 +5,11 @@ Created on Thu Jun 15 09:59:26 2023.
 
 @author: ghiggi
 """
+import dask.array
 import numpy as np
+import xarray as xr
 
-# FutureWarning: The `numpy.argsort` function is not implemented by Dask array.
-# You may want to use the da.map_blocks function or something similar to silence this warning.
-# Your code may stop working in a future release.
-
-
-def np_rankdata(x: np.ndarray, axis: int = -1):
-    """Rank data using numpy.
-
-    Avoids using argsort 2 times.
-    """
-    in_shape = x.shape
-    tmp = np.argsort(x, axis=-1).reshape(-1, in_shape[axis])
-    rank = np.empty_like(tmp, dtype="float64")
-    np.put_along_axis(rank, tmp, np.arange(1, in_shape[axis] + 1), axis=axis)
-    del tmp
-    rank = rank.reshape(in_shape)
-    return rank
-
-
+#### rankdata
 # try:
 #     from bottleneck import nanrankdata as rankdata
 # except ImportError:
@@ -37,22 +21,74 @@ def np_rankdata(x: np.ndarray, axis: int = -1):
 # arr = np.arange(0, 100_000_000).reshape(10_000,10_000)
 
 # %timeit arr.argsort(axis=1).argsort(axis=1) + 1
-# %timeit np_rankdata(arr, axis=1)
+# %timeit rankdata(arr, axis=1)
 # %timeit bottleneck.rankdata(arr, axis=1)
 # %timeit scipy.stats.rankdata(arr, axis=1)
 
 # x = np.array([np.nan, np.nan, 5, 4])
 # x.argsort().argsort() + 1
-# np_rankdata(x)
+# rankdata(x)
 # bottleneck.rankdata(x)
 # bottleneck.nanrankdata(x)
 # scipy.stats.rankdata(x)
 
-# pvalues
+####---------------------------------------------------------------------------.
+#### pvalues
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L319
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L374
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L460
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L503
+
+
+####---------------------------------------------------------------------------.
+
+
+def _np_rankdata(x: np.ndarray, axis: int = -1, out_dtype="int32"):
+    """Rank data using numpy.
+
+    Avoids using argsort 2 times.
+    """
+    in_shape = x.shape
+    tmp = np.argsort(x, axis=axis).reshape(-1, in_shape[axis])
+    rank = np.empty_like(tmp, dtype=out_dtype)
+    np.put_along_axis(rank, tmp, np.arange(1, in_shape[axis] + 1), axis=axis)
+    del tmp
+    rank = rank.reshape(in_shape)
+    return rank
+
+
+def _da_rankdata(x: dask.array.Array, axis: int = -1, out_dtype="int32"):
+    """Rank data using dask.
+
+    Avoids using argsort 2 times.
+    Wraps around _np_rankdata using dask.array.map_blocks
+    """
+    rank_dask = dask.array.map_blocks(
+        _np_rankdata,
+        x,
+        dtype=out_dtype,
+        # _np_rankdata kwargs
+        axis=axis,
+        out_dtype=out_dtype,
+    )
+    return rank_dask
+
+
+def rankdata(x: np.ndarray, axis: int = -1, out_dtype="int32"):
+    """Rank data.
+
+    Avoids using argsort 2 times.
+    """
+    if isinstance(x, np.ndarray):
+        rank = _np_rankdata(x, axis=axis)
+    elif isinstance(x, dask.array.Array):
+        rank = _da_rankdata(x, axis=axis)
+    elif isinstance(x, xr.DataArray):
+        rank = x.copy()
+        rank.data = rankdata(x.data, axis=axis)
+    else:
+        raise NotImplementedError()
+    return rank
 
 
 def __pearson_corr_coeff(x, y, mean_x, mean_y, std_x, std_y):
@@ -93,7 +129,7 @@ def __pearson_corr_coeff(x, y, mean_x, mean_y, std_x, std_y):
     corr = cov / (std_x * std_y)
 
     # Clip to avoid numerical artefacts
-    corr = np.clip(corr, -1, 1)
+    corr = np.clip(corr, -1.0, 1.0).astype("float64")
 
     return corr
 
@@ -150,5 +186,5 @@ def _spearman_corr_coeff(x, y):
 
     """
     # TODO: implement np.nan_rankdata (now is wrong)
-    corr = _pearson_corr_coeff(x=np_rankdata(x, axis=1), y=np_rankdata(y, axis=1))
+    corr = _pearson_corr_coeff(x=rankdata(x, axis=1), y=rankdata(y, axis=1))
     return corr

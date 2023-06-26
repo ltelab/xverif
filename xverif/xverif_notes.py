@@ -107,15 +107,10 @@ Created on Sat Feb 27 15:51:43 2021.
 
 ####--------------------------------------------------------------------------.
 #### - Suppress warnings
-# - Division by 0
-
-# RuntimeWarning: Degrees of freedom <= 0 for slice   (when all np.nan in nanstd)
-
-# suppress_warnings("All-NaN slice encountered")
-# with suppress_warnings("invalid value encountered in true_divide"):
-#         with suppress_warnings("invalid value encountered in double_scalars"):
-
-# RuntimeWarning: invalid value encountered in divide
+"invalid value encountered in divide"  # division by 0
+"Degrees of freedom <= 0 for slice"  # (when all np.nan in nanstd)
+"All-NaN slice encountered"
+"invalid value encountered in double_scalars"
 
 # sklearn way to deal with division by 0
 # https://github.com/scikit-learn/scikit-learn/blob/364c77e047ca08a95862becf40a04fe9d4cd2c98/sklearn/metrics/_classification.py#L1301

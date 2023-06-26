@@ -18,6 +18,7 @@ flox = "^0.7.1"
 scoringrules = "^0.2.0"
 scipy = "^1.10.1"
 typing-extensions = "^4.6.3"
+graphviz = "^0.20.1"
 
 
 [tool.poetry.group.dev.dependencies]

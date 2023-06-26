@@ -109,10 +109,17 @@ skip_zeros = True
 kwargs = {}
 implementation = "stacked"
 metrics = None
-# metrics = ["MAE", "rob_MAE"]
+metrics = ["MAE", "rob_MAE"]
 
 # Chunk finely on auxiliary dimension if going out of memory !
-pred = pred.chunk({"x": -1, "y": -1, "realization": 1, "leadtime": 1})
+pred = pred.chunk(
+    {
+        "x": -1,
+        "y": -1,
+        # "realization": 1,
+        "leadtime": 1,
+    }
+)
 obs = obs.chunk({"x": -1, "y": -1})
 
 

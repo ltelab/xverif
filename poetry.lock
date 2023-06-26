@@ -900,7 +900,7 @@ dev = ["flake8", "markdown", "twine", "wheel"]
 name = "graphviz"
 version = "0.20.1"
 description = "Simple Python interface for Graphviz"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -3579,4 +3579,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "0fc848dd861b77ccea0b099b9e8dadfea1a61522efbebb3b7dcaa18fd1084b94"
+content-hash = "788a76cbd816477d2f9868c97b0b2f91943ea23eceaa715d8fa6a9e7e3b045ef"
