@@ -7,6 +7,10 @@ Created on Thu Jun 15 09:59:26 2023.
 """
 import numpy as np
 
+# FutureWarning: The `numpy.argsort` function is not implemented by Dask array. 
+# You may want to use the da.map_blocks function or something similar to silence this warning. 
+# Your code may stop working in a future release.
+
 
 def np_rankdata(x: np.ndarray, axis: int=-1):
     """Rank data using numpy.

@@ -129,6 +129,8 @@ def deterministic(
     forecast_type="continuous",
     aggregating_dim=None,
     implementation="stacked",
+    metrics=None,
+    compute=True,
     # TODO: to refactor name
     skip_na=True,
     skip_infs=True,
@@ -167,6 +169,8 @@ def deterministic(
         pred=pred,
         obs=obs,
         dims=aggregating_dim,
+        metrics=metrics,
+        compute=compute, 
         skip_na=skip_na,
         skip_infs=skip_infs,
         skip_zeros=skip_zeros,

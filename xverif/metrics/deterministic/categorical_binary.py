@@ -41,12 +41,17 @@ def _get_metrics(pred, obs):
 
     # calculate number hits, misses, false alarms, correct rejects
     H = np.nansum(np.logical_and(pred == 1, obs == 1), dtype="float64")
-    F = np.nansum(np.logical_and(pred == 1, obs == 0), dtype="float64")
     M = np.nansum(np.logical_and(pred == 0, obs == 1), dtype="float64")
+    F = np.nansum(np.logical_and(pred == 1, obs == 0), dtype="float64")
     R = np.nansum(np.logical_and(pred == 0, obs == 0), dtype="float64")
 
     N = H + F + M + R
-
+    
+    TP = H 
+    FN = M
+    FP = F
+    TN = R
+   
     # Probability of detection
     # - Detection Rate
     # - Sensitivity
@@ -54,14 +59,26 @@ def _get_metrics(pred, obs):
     # - True Positive Rate
     # - Hit Rate
     POD = H / (H + M + EPS)
-
-    # Probability of False Rejection
-    # - Miss Rate
-    PFR  = M / (H + M + EPS)
-
+    
     # Probability of Rejection
     # - Specificity
     POR = R / (F + R + EPS)
+    
+    # Precision
+    # - TODO Success ratio (SR?)
+    precision = H / (H + F + EPS)
+    
+    # Correct-Rejection Ratio
+    # - Negative Predictive Value 
+    CRR = R / (M + R + EPS)
+    
+    
+    # Probability of False Rejection
+    # - Miss Rate
+    PFR  = M / (H + M + EPS)
+    
+    # Miss Ratio
+    MR = M / (M + R + EPS)
 
     # False Alarm Rate
     # - Prob of false detection (POFD)
@@ -76,19 +93,6 @@ def _get_metrics(pred, obs):
     # Success Ratio (SR)
     # - Hit Ratio (HR)
     SR =  1 - FAR
-
-    # Precision score
-    # - TODO:  Success ratio (SR?)
-    # PS = H / (H + F + EPS)
-
-    # Miss Ratio
-    MR = M / (M + R + EPS)
-
-    # Correct-Rejection Ratio
-    CRR = R / (M + R + EPS)
-
-    # ????
-    s = (H + M) / (H + M + F + R) # N
 
     # Youden J statistics
     # - Informedness
@@ -115,13 +119,17 @@ def _get_metrics(pred, obs):
 
     # Frequency Bias
     FB = (H + F) / (H + M + EPS)
-
+    
+    # ????
+    s = (H + M) / N
+    
     # Accuracy (fraction correct)
     # - Overall accuracy (OA)
     # - Percent correct (PC)
-    ACC = (H + R) / (H + M + F + R) # N
+    # - Exact match Ratio
+    ACC = (H + R) / N
     ACC_std = np.sqrt(s*POD*(1 - POD)/N + (1 - s)*FA*(1 - FA)/N)
-
+    
     # Heidke Skill Score (-1 < HSS < 1) < 0 implies no skill
     # - Cohen’s Kappa
     HSS = 2 * (H * R - F * M) / ((H + M) * (M + R) + (H + F) * (F + R) + EPS)
@@ -139,7 +147,12 @@ def _get_metrics(pred, obs):
     # - Dice Coefficient
     # - The harmonic mean of precision and sensitivity (pysteps)
     F1 = 2 * H / (2 * H + F + M + EPS)
-
+    # F1 = 2 * (precision * POD) / (precision + POD)
+    
+    # F2 score 
+    # - 2x emphasis on recall.
+    F2 = 5 * (precision * POD) / (4 * precision + POD)   
+    
     # Jaccard Index
     # - Tanimoto Coefficient
     # - Intersection over Union (IoU)
@@ -151,7 +164,10 @@ def _get_metrics(pred, obs):
     # - if denominator 0, result should be? 0?
     MCC = (H * R - F * M) / np.sqrt((H + F) * (H + M) * (R + F) * (R + M))
     MCC = (H * R) / np.sqrt((H + F) * (H + M) * (R + F) * (R + M))
-
+    
+    # Lift score 
+    LS = (TP /(TP + FP))/((TP + FN)/N)
+    
     # Odds Ratio and Log Odds Ratio
     OR = H * R / (F * M + EPS)
     LOR = np.log(OR) # LOR = np.log(H) + np.log(R) - np.log(F) - np.log(M)
@@ -186,6 +202,10 @@ def _get_metrics(pred, obs):
         F,
         M,
         R,
+        TP,
+        FN, 
+        FP, 
+        TN,
         POD,
         POD_std,
         FAR,
@@ -217,7 +237,9 @@ def _get_metrics(pred, obs):
         ORSS_std,
         MCC,
         F1,
+        F2,
         J,
+        LS,
         YulesQ,
         EDS,
         EDS_std,
@@ -243,6 +265,10 @@ def get_metrics_info():
         "F",
         "M",
         "R",
+        "TP",
+        "FN", 
+        "FP", 
+        "TN",
         "POD",
         "POD_std",
         "FAR",
@@ -274,7 +300,9 @@ def get_metrics_info():
         "ORSS_std",
         "MCC",
         "F1",
+        "F2",
         "J",
+        "LS",
         "YulesQ",
         "EDS",
         "EDS_std",
