@@ -169,7 +169,10 @@ def get_metrics_info():
 
 @print_elapsed_time(task="deterministic continuous")
 def _xr_apply_routine(
-    pred, obs, dims=("time"), **kwargs,
+    pred,
+    obs,
+    dims=("time"),
+    **kwargs,
 ):
     """Compute deterministic continuous metrics."""
     # Retrieve function and skill names
@@ -181,10 +184,9 @@ def _xr_apply_routine(
     # Define gufunc kwargs
     input_core_dims = [dims, dims]
     dask_gufunc_kwargs = {
-        "output_sizes":
-            {
-                "skill": len(skill_names),
-             }
+        "output_sizes": {
+            "skill": len(skill_names),
+        }
     }
 
     # Apply ufunc
@@ -210,9 +212,3 @@ def _xr_apply_routine(
 
     # Return the skill Dataset
     return ds_skill
-
-
-
-
-
-

@@ -12,6 +12,6 @@ __all__ = [
     "spatial",
 ]
 
-# Arbitrary small yet strictly positive number to avoid undefined results when 
+# Arbitrary small yet strictly positive number to avoid undefined results when
 # dividing by zero
 EPS = 0.000001  # epsilon = np.finfo(np.float64).eps

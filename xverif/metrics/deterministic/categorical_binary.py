@@ -46,12 +46,12 @@ def _get_metrics(pred, obs):
     R = np.nansum(np.logical_and(pred == 0, obs == 0), dtype="float64")
 
     N = H + F + M + R
-    
-    TP = H 
+
+    TP = H
     FN = M
     FP = F
     TN = R
-   
+
     # Probability of detection
     # - Detection Rate
     # - Sensitivity
@@ -59,24 +59,23 @@ def _get_metrics(pred, obs):
     # - True Positive Rate
     # - Hit Rate
     POD = H / (H + M + EPS)
-    
+
     # Probability of Rejection
     # - Specificity
     POR = R / (F + R + EPS)
-    
+
     # Precision
     # - TODO Success ratio (SR?)
     precision = H / (H + F + EPS)
-    
+
     # Correct-Rejection Ratio
-    # - Negative Predictive Value 
+    # - Negative Predictive Value
     CRR = R / (M + R + EPS)
-    
-    
+
     # Probability of False Rejection
     # - Miss Rate
-    PFR  = M / (H + M + EPS)
-    
+    PFR = M / (H + M + EPS)
+
     # Miss Ratio
     MR = M / (M + R + EPS)
 
@@ -92,11 +91,11 @@ def _get_metrics(pred, obs):
 
     # Success Ratio (SR)
     # - Hit Ratio (HR)
-    SR =  1 - FAR
+    SR = 1 - FAR
 
     # Youden J statistics
     # - Informedness
-    Informedness = POD + POR  - 1
+    Informedness = POD + POR - 1
 
     # Markdness
     Markedness = SR + CRR - 1
@@ -107,52 +106,63 @@ def _get_metrics(pred, obs):
     HK = POD - FA
 
     # Standard deviations
-    FA_std =  np.sqrt(FA * (1 - FA) / (F + R + EPS))
-    POD_std =  np.sqrt(POD * (1 - POD) / (H + M + EPS))
-    FAR_std =  np.sqrt( (FAR**4)*((1 - POD) / (H + EPS) + (1 - FA) / (F + EPS)) * (H**2) / (F**2 + EPS))
+    FA_std = np.sqrt(FA * (1 - FA) / (F + R + EPS))
+    POD_std = np.sqrt(POD * (1 - POD) / (H + M + EPS))
+    FAR_std = np.sqrt(
+        (FAR**4)
+        * ((1 - POD) / (H + EPS) + (1 - FA) / (F + EPS))
+        * (H**2)
+        / (F**2 + EPS)
+    )
     SR_std = FAR_std
 
     # Critical Success Index
     # - Threat Score
     CSI = H / (H + M + F + EPS)
-    CSI_std = np.sqrt( (CSI**2)*((1 - POD)/(H + EPS) + F*(1 - FA)/( (H + F + M)**2 + EPS) ) )
+    CSI_std = np.sqrt(
+        (CSI**2) * ((1 - POD) / (H + EPS) + F * (1 - FA) / ((H + F + M) ** 2 + EPS))
+    )
 
     # Frequency Bias
     FB = (H + F) / (H + M + EPS)
-    
+
     # ????
     s = (H + M) / N
-    
+
     # Accuracy (fraction correct)
     # - Overall accuracy (OA)
     # - Percent correct (PC)
     # - Exact match Ratio
     ACC = (H + R) / N
-    ACC_std = np.sqrt(s*POD*(1 - POD)/N + (1 - s)*FA*(1 - FA)/N)
-    
+    ACC_std = np.sqrt(s * POD * (1 - POD) / N + (1 - s) * FA * (1 - FA) / N)
+
     # Heidke Skill Score (-1 < HSS < 1) < 0 implies no skill
     # - Cohen’s Kappa
     HSS = 2 * (H * R - F * M) / ((H + M) * (M + R) + (H + F) * (F + R) + EPS)
-    HSS_std = np.sqrt((FA_std**2)*(HSS**2)*(1 /(POD-FA+EPS) + (1-s)*(1-2*s))**2 + (POD_std**2)*(HSS**2)*(1/(POD-FA+EPS) - s*(1-2*s))^2)
+    HSS_std = np.sqrt(
+        (FA_std**2) * (HSS**2) * (1 / (POD - FA + EPS) + (1 - s) * (1 - 2 * s)) ** 2
+        + (POD_std**2) * (HSS**2) * (1 / (POD - FA + EPS) - s * (1 - 2 * s))
+        ^ 2
+    )
 
     # Equitable Threat Score (ETS)
     # -  Gilbert Skill Score (GSS)
     # --> TODO: check equality
     # ETS = (POD - FA) / ((1 - s * POD) / (1 - s) + FA * (1 - s) / s)
-    HITSrandom = 1 * (H + M)*(H + F) / N
+    HITSrandom = 1 * (H + M) * (H + F) / N
     ETS = (H - HITSrandom) / (H + F + M - HITSrandom + EPS)
-    ETS_std = np.sqrt(4 * (HSS_std**2) / ((2 - HSS + EPS)**4))
+    ETS_std = np.sqrt(4 * (HSS_std**2) / ((2 - HSS + EPS) ** 4))
 
     # F1 score
     # - Dice Coefficient
     # - The harmonic mean of precision and sensitivity (pysteps)
     F1 = 2 * H / (2 * H + F + M + EPS)
     # F1 = 2 * (precision * POD) / (precision + POD)
-    
-    # F2 score 
+
+    # F2 score
     # - 2x emphasis on recall.
-    F2 = 5 * (precision * POD) / (4 * precision + POD)   
-    
+    F2 = 5 * (precision * POD) / (4 * precision + POD)
+
     # Jaccard Index
     # - Tanimoto Coefficient
     # - Intersection over Union (IoU)
@@ -164,92 +174,118 @@ def _get_metrics(pred, obs):
     # - if denominator 0, result should be? 0?
     MCC = (H * R - F * M) / np.sqrt((H + F) * (H + M) * (R + F) * (R + M))
     MCC = (H * R) / np.sqrt((H + F) * (H + M) * (R + F) * (R + M))
-    
-    # Lift score 
-    LS = (TP /(TP + FP))/((TP + FN)/N)
-    
+
+    # Lift score
+    LS = (TP / (TP + FP)) / ((TP + FN) / N)
+
     # Odds Ratio and Log Odds Ratio
     OR = H * R / (F * M + EPS)
-    LOR = np.log(OR) # LOR = np.log(H) + np.log(R) - np.log(F) - np.log(M)
+    LOR = np.log(OR)  # LOR = np.log(H) + np.log(R) - np.log(F) - np.log(M)
 
     ## Odds Ratio Skill Score (ORSS)
     # - Yules's Q
-    YulesQ = (OR - 1) / (OR + 1) # TODO check
+    YulesQ = (OR - 1) / (OR + 1)  # TODO check
     ORSS = (H * R - F * M) / (H * R + F * M + EPS)
-    n_h = 1 / (1 / H + 1 / F + 1 / M + 1 / R + EPS) # Error if H, F, M or R = 0
-    ORSS_std = np.sqrt(1 / n_h * 4 * OR ** 2 / ((OR + 1) ** 4))
+    n_h = 1 / (1 / H + 1 / F + 1 / M + 1 / R + EPS)  # Error if H, F, M or R = 0
+    ORSS_std = np.sqrt(1 / n_h * 4 * OR**2 / ((OR + 1) ** 4))
 
     # (Symmetric) Extreme Dependency Score (EDS)
-    p = (H + M)/N
-    EDS = 2 * np.log((H+M)/N) / np.log(H/N) - 1     # Error when H==N, H+M=0
-    SEDS = (np.log((H+F)/N) + np.log((H+M)/N)) / np.log(H/N) - 1 # Error when H==N, H+M=0, H+F=0
-    EDS_std = 2 * np.abs(np.log(p))/(POD*(np.log(p) + np.log(POD))**2)* np.sqrt(POD*(1-POD)/(p*N))
-    SEDS_std = np.sqrt(POD*(1-POD)/(N*p)) *(-np.log(FB*p**2)/(POD* np.log(POD*p)**2))
+    p = (H + M) / N
+    EDS = 2 * np.log((H + M) / N) / np.log(H / N) - 1  # Error when H==N, H+M=0
+    SEDS = (np.log((H + F) / N) + np.log((H + M) / N)) / np.log(
+        H / N
+    ) - 1  # Error when H==N, H+M=0, H+F=0
+    EDS_std = (
+        2
+        * np.abs(np.log(p))
+        / (POD * (np.log(p) + np.log(POD)) ** 2)
+        * np.sqrt(POD * (1 - POD) / (p * N))
+    )
+    SEDS_std = np.sqrt(POD * (1 - POD) / (N * p)) * (
+        -np.log(FB * p**2) / (POD * np.log(POD * p) ** 2)
+    )
 
     # (Symmetric) Extremal Dependence Index (SEDI)
     # - Error when FA or POD = 0
-    EDI = (np.log(FA) - np.log(POD))/(np.log(FA) + np.log(POD) + EPS)
-    SEDI = (np.log(FA) - np.log(POD) + np.log(1-POD) - np.log(1-FA)) / (
-        np.log(FA) + np.log(POD) + np.log(1-POD) + np.log(1-FA))
+    EDI = (np.log(FA) - np.log(POD)) / (np.log(FA) + np.log(POD) + EPS)
+    SEDI = (np.log(FA) - np.log(POD) + np.log(1 - POD) - np.log(1 - FA)) / (
+        np.log(FA) + np.log(POD) + np.log(1 - POD) + np.log(1 - FA)
+    )
 
-    EDI_std = 2 * np.abs(np.log(FA) + POD/(1-POD)* np.log(POD))/(POD*(np.log(FA) + np.log(POD))**2)* np.sqrt(POD*(1-POD)/(p*N))
-    SEDI_std = 2 * np.abs(((1-POD)*(1-FA)+POD*FA)/((1-POD)*(1-FA))* np.log(FA*(1-POD)) + 2*POD/(1-POD)* np.log(POD*(1-FA)))/(POD*(np.log(FA*(1-POD)) + np.log(POD*(1-FA)))**2)* np.sqrt(POD*(1-POD)/(p*N))
-
+    EDI_std = (
+        2
+        * np.abs(np.log(FA) + POD / (1 - POD) * np.log(POD))
+        / (POD * (np.log(FA) + np.log(POD)) ** 2)
+        * np.sqrt(POD * (1 - POD) / (p * N))
+    )
+    SEDI_std = (
+        2
+        * np.abs(
+            ((1 - POD) * (1 - FA) + POD * FA)
+            / ((1 - POD) * (1 - FA))
+            * np.log(FA * (1 - POD))
+            + 2 * POD / (1 - POD) * np.log(POD * (1 - FA))
+        )
+        / (POD * (np.log(FA * (1 - POD)) + np.log(POD * (1 - FA))) ** 2)
+        * np.sqrt(POD * (1 - POD) / (p * N))
+    )
 
     # Define metrics
-    skills = np.array([
-        H,
-        F,
-        M,
-        R,
-        TP,
-        FN, 
-        FP, 
-        TN,
-        POD,
-        POD_std,
-        FAR,
-        FAR_std,
-        FA,
-        FA_std,
-        SR,
-        SR_std,
-        # s
-        POR,
-        PFR,
-        MR,
-        CRR,
-        Informedness,
-        Markedness,
-        FB,
-        HK,
-        ACC,
-        ACC_std,
-        CSI,
-        CSI_std,
-        HSS,
-        HSS_std,
-        ETS,
-        ETS_std,
-        OR,
-        LOR,
-        ORSS,
-        ORSS_std,
-        MCC,
-        F1,
-        F2,
-        J,
-        LS,
-        YulesQ,
-        EDS,
-        EDS_std,
-        SEDS,
-        SEDS_std,
-        EDI,
-        EDI_std,
-        SEDI,
-        SEDI_std,
-        ])
+    skills = np.array(
+        [
+            H,
+            F,
+            M,
+            R,
+            TP,
+            FN,
+            FP,
+            TN,
+            POD,
+            POD_std,
+            FAR,
+            FAR_std,
+            FA,
+            FA_std,
+            SR,
+            SR_std,
+            # s
+            POR,
+            PFR,
+            MR,
+            CRR,
+            Informedness,
+            Markedness,
+            FB,
+            HK,
+            ACC,
+            ACC_std,
+            CSI,
+            CSI_std,
+            HSS,
+            HSS_std,
+            ETS,
+            ETS_std,
+            OR,
+            LOR,
+            ORSS,
+            ORSS_std,
+            MCC,
+            F1,
+            F2,
+            J,
+            LS,
+            YulesQ,
+            EDS,
+            EDS_std,
+            SEDS,
+            SEDS_std,
+            EDI,
+            EDI_std,
+            SEDI,
+            SEDI_std,
+        ]
+    )
 
     return skills
 
@@ -266,8 +302,8 @@ def get_metrics_info():
         "M",
         "R",
         "TP",
-        "FN", 
-        "FP", 
+        "FN",
+        "FP",
         "TN",
         "POD",
         "POD_std",
@@ -318,7 +354,10 @@ def get_metrics_info():
 
 @print_elapsed_time(task="deterministic categorical")
 def _xr_apply_routine(
-    pred, obs, dims=["time"], **kwargs,
+    pred,
+    obs,
+    dims=["time"],
+    **kwargs,
 ):
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
@@ -327,11 +366,10 @@ def _xr_apply_routine(
     # TODO
 
     # Define gufunc kwargs
-    dask_gufunc_kwargs={
-        "output_sizes":
-            {
-                "skill": len(skill_names),
-             }
+    dask_gufunc_kwargs = {
+        "output_sizes": {
+            "skill": len(skill_names),
+        }
     }
 
     # Apply ufunc
@@ -356,4 +394,3 @@ def _xr_apply_routine(
 
     # Return the skill Dataset
     return ds_skill
-

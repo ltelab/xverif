@@ -11,6 +11,7 @@ from time import perf_counter
 
 def print_elapsed_time(task=""):
     """Decorator which print the execution time of a task."""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             start_time = perf_counter()
@@ -24,8 +25,3 @@ def print_elapsed_time(task=""):
         return wrapper
 
     return decorator
-
-
-
-
-

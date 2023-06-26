@@ -20,7 +20,7 @@ def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
     axis = tuple(axis)
 
     # Broadcast obs to pred
-    obs = obs*np.ones_like(pred)
+    obs = obs * np.ones_like(pred)
 
     ##------------------------------------------------------------------------.
     # - Error
@@ -151,7 +151,8 @@ def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
             # # Overall skill
             # NSE,
             # KGE,
-        ], axis = -1
+        ],
+        axis=-1,
     )
     return skills
 
@@ -198,7 +199,10 @@ def get_metrics_info():
 
 @print_elapsed_time(task="deterministic continuous")
 def _xr_apply_routine(
-    pred, obs, dims=("time"), **kwargs,
+    pred,
+    obs,
+    dims=("time"),
+    **kwargs,
 ):
     """Compute deterministic continuous metrics.
 
@@ -210,16 +214,15 @@ def _xr_apply_routine(
     # Update kwargs with axis
     n_dims = len(list(pred.dims))
     n_aggregating_dims = len(dims)
-    axis = list(range(n_dims-n_aggregating_dims, n_dims))
+    axis = list(range(n_dims - n_aggregating_dims, n_dims))
     kwargs.update({"axis": axis})
 
     # Define gufunc kwargs
     input_core_dims = [dims, dims]
     dask_gufunc_kwargs = {
-        "output_sizes":
-            {
-                "skill": len(skill_names),
-             }
+        "output_sizes": {
+            "skill": len(skill_names),
+        }
     }
 
     # Apply ufunc
@@ -245,7 +248,3 @@ def _xr_apply_routine(
 
     # Return the skill Dataset
     return ds_skill
-
-
-
-

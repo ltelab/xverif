@@ -7,12 +7,12 @@ Created on Thu Jun 15 09:59:26 2023.
 """
 import numpy as np
 
-# FutureWarning: The `numpy.argsort` function is not implemented by Dask array. 
-# You may want to use the da.map_blocks function or something similar to silence this warning. 
+# FutureWarning: The `numpy.argsort` function is not implemented by Dask array.
+# You may want to use the da.map_blocks function or something similar to silence this warning.
 # Your code may stop working in a future release.
 
 
-def np_rankdata(x: np.ndarray, axis: int=-1):
+def np_rankdata(x: np.ndarray, axis: int = -1):
     """Rank data using numpy.
 
     Avoids using argsort 2 times.
@@ -55,9 +55,7 @@ def np_rankdata(x: np.ndarray, axis: int=-1):
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L503
 
 
-def __pearson_corr_coeff(x, y,
-                         mean_x, mean_y,
-                         std_x, std_y):
+def __pearson_corr_coeff(x, y, mean_x, mean_y, std_x, std_y):
     """
     Compute the Pearson Correlation Coefficient between pairwise columns.
 
@@ -120,11 +118,14 @@ def _pearson_corr_coeff(x, y):
         Correlation coefficient with shape (aux,)
 
     """
-    corr = __pearson_corr_coeff(x=x, y=y,
-                                mean_x=np.nanmean(x, axis=1),
-                                mean_y=np.nanmean(y, axis=1),
-                                std_x=np.nanstd(x, axis=1),
-                                std_y=np.nanstd(y, axis=1))
+    corr = __pearson_corr_coeff(
+        x=x,
+        y=y,
+        mean_x=np.nanmean(x, axis=1),
+        mean_y=np.nanmean(y, axis=1),
+        std_x=np.nanstd(x, axis=1),
+        std_y=np.nanstd(y, axis=1),
+    )
     return corr
 
 
@@ -149,7 +150,5 @@ def _spearman_corr_coeff(x, y):
 
     """
     # TODO: implement np.nan_rankdata (now is wrong)
-    corr = _pearson_corr_coeff(x=np_rankdata(x, axis=1),
-                               y=np_rankdata(y, axis=1))
+    corr = _pearson_corr_coeff(x=np_rankdata(x, axis=1), y=np_rankdata(y, axis=1))
     return corr
-

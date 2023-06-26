@@ -14,7 +14,6 @@ import numpy as np
 # error * weights_lat
 
 
-
 def global_summary(ds, area_coords="area"):
     """Compute global statistics weighted by grid cell area."""
     # Check area_coords

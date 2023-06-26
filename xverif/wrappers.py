@@ -45,6 +45,7 @@ def _check_forecast_type(forecast_type: str) -> None:
             f"{forecast_type} is not a valid forecast type. Must be one of {valid}."
         )
 
+
 def _check_aggregating_dim(aggregating_dim, obs):
     """Check aggregating_dims format."""
     if not isinstance(aggregating_dim, (type(None), list, tuple)):
@@ -137,7 +138,7 @@ def deterministic(
     skip_zeros=True,
 ):
     """Compute deterministic metrics."""
-    pred, obs = ensure_common_xarray_format(pred, obs) # _check_args(pred, obs)
+    pred, obs = ensure_common_xarray_format(pred, obs)  # _check_args(pred, obs)
 
     aggregating_dim = _check_aggregating_dim(aggregating_dim, obs)
     _check_shared_dims(aggregating_dim, pred, obs)
@@ -170,7 +171,7 @@ def deterministic(
         obs=obs,
         dims=aggregating_dim,
         metrics=metrics,
-        compute=compute, 
+        compute=compute,
         skip_na=skip_na,
         skip_infs=skip_infs,
         skip_zeros=skip_zeros,

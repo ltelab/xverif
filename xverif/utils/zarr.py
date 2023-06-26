@@ -74,7 +74,9 @@ def _check_default_compressor_type(default_compressor, variable_names):
 
 def _check_compressor_dict(compressor):
     """Check compressor dictionary validity."""
-    all_valid = [is_numcodecs(cmp) or isinstance(cmp, type(None)) for cmp in compressor.values()]
+    all_valid = [
+        is_numcodecs(cmp) or isinstance(cmp, type(None)) for cmp in compressor.values()
+    ]
     if not all(all_valid):
         raise ValueError(
             "All compressors specified in the 'compressor' dictionary must be numcodecs (or None)."
@@ -104,10 +106,10 @@ def check_compressor(compressor, variable_names, default_compressor=None):
 
     # If a unique compressor, create a dictionary with the same compressor for all variables
     elif is_numcodecs(compressor) or isinstance(compressor, type(None)):
-       compressor = {var: compressor for var in variable_names}
+        compressor = {var: compressor for var in variable_names}
 
     # If a dictionary, check keys validity and compressor validity
-    else: # isinstance(compressor, dict):
+    else:  # isinstance(compressor, dict):
         compressor = _check_compressor_dict(compressor)
 
     return compressor
@@ -151,7 +153,9 @@ def get_dataset_chunks(ds):
     chunks = {}
     for var in variable_names:
         if ds[var].chunks is not None:
-            chunks[var] = {dim: v[0] for dim, v in zip(ds[var].dims, ds[var].chunks, strict=True)}
+            chunks[var] = {
+                dim: v[0] for dim, v in zip(ds[var].dims, ds[var].chunks, strict=True)
+            }
         else:
             chunks[var] = None
     return chunks
@@ -170,7 +174,7 @@ def _check_contains_all_keys(dictionary, keys, error_message):
 
 
 def _use_default_chunks(ds, default_chunks):
-    """"Define chunks if chunks='auto'.
+    """Define chunks if chunks='auto'.
 
     If default_chunks is a dict, set chunks=default_chunks
     If default_chunks = None, create chunks dictionary  with <dimension>:'auto'.
@@ -215,7 +219,9 @@ def _check_default_chunks(default_chunks, ds):
         is_chunks_per_dims = _is_chunk_dict_per_dims(default_chunks, ds)
         if not is_chunks_per_variable and not is_chunks_per_dims:
             # TODO: more info error on which dim or var is missing
-            raise ValueError("Unvalid default_chunks. Must include all Dataset variables or dimensions.")
+            raise ValueError(
+                "Unvalid default_chunks. Must include all Dataset variables or dimensions."
+            )
     return default_chunks
 
 
@@ -228,12 +234,14 @@ def _check_chunks_dict(chunks, ds):
     is_chunks_per_dims = _is_chunk_dict_per_dims(chunks, ds)
     if not is_chunks_per_variable and not is_chunks_per_dims:
         # TODO: more info error on which dim or var is missing
-        raise ValueError("Unvalid chunks. Must include all Dataset variables or dimensions.")
+        raise ValueError(
+            "Unvalid chunks. Must include all Dataset variables or dimensions."
+        )
 
     if is_chunks_per_variable:
         chunks = _checks_variables_chunks_dict(ds, chunks)
-    else: #  is_chunks_per_dims:
-        chunks = _convert_dims_chunks_dict(ds, chunks) # to per variable
+    else:  #  is_chunks_per_dims:
+        chunks = _convert_dims_chunks_dict(ds, chunks)  # to per variable
     return chunks
 
 
@@ -388,7 +396,7 @@ def rechunk_dataset(ds, chunks, target_store, temp_store, max_mem="1GB", force=F
 
     # Check zarr stores
     _check_zarr_store(target_store, force=force)
-    _check_zarr_store(temp_store, force=True) # remove if exists
+    _check_zarr_store(temp_store, force=True)  # remove if exists
 
     # Check chunks
     target_chunks = check_chunks(ds=ds, chunks=chunks, default_chunks=None)
@@ -407,12 +415,4 @@ def rechunk_dataset(ds, chunks, target_store, temp_store, max_mem="1GB", force=F
         r.execute()
 
     # Remove temporary store
-    _check_zarr_store(temp_store, force=True) # remove if exists
-
-
-
-
-
-
-
-
+    _check_zarr_store(temp_store, force=True)  # remove if exists

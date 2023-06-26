@@ -14,7 +14,7 @@ import xarray as xr
 def _get_random_data(shape, data_type, n_class=2):
     """Generate random array based on data_type."""
     if data_type in ["continuous", "probability"]:
-        data = np.random.rand(*shape) # within [0, 1]
+        data = np.random.rand(*shape)  # within [0, 1]
     elif data_type == "categorical":
         class_values = np.arange(0, n_class)
         data = np.random.choice(class_values, size=shape)
@@ -24,13 +24,15 @@ def _get_random_data(shape, data_type, n_class=2):
     return data
 
 
-def _create_datarray(obs_number=1000,
-                     obs_dim="time",
-                     data_type="continuous",
-                     aux_shape=(10,10),
-                     aux_dims=("x", "y"),
-                     n_class=3,
-                     name="var"):
+def _create_datarray(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10),
+    aux_dims=("x", "y"),
+    n_class=3,
+    name="var",
+):
     """Generate a DataArray."""
     # Check inputs
     if isinstance(aux_shape, int):
@@ -44,7 +46,7 @@ def _create_datarray(obs_number=1000,
     if not isinstance(obs_number, int):
         raise ValueError("'obs_number' must be an integer'")
 
-    #-------------------------------------------------------------------------.
+    # -------------------------------------------------------------------------.
     # Define array shape
     shape = [obs_number] + list(aux_shape)
 
@@ -66,170 +68,202 @@ def _create_datarray(obs_number=1000,
     dims = [obs_dim] + list(aux_dims)
 
     # Generate DataArray
-    da = xr.DataArray(
-           data,
-           coords=coords,
-           dims=dims,
-           name=name
-    )
+    da = xr.DataArray(data, coords=coords, dims=dims, name=name)
     return da
 
 
-def _create_dataset(obs_number=1000,
-                    obs_dim="time",
-                    data_type="continuous",
-                    aux_shape=(10,10),
-                    aux_dims=("x", "y"),
-                    n_class=3,
-                    n_vars=3):
+def _create_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10),
+    aux_dims=("x", "y"),
+    n_class=3,
+    n_vars=3,
+):
     """Generate a Dataset."""
-    list_da = [_create_datarray(
-        obs_number=obs_number,
-        obs_dim=obs_dim,
-        data_type=data_type,
-        aux_shape=aux_shape,
-        aux_dims=aux_dims,
-        n_class=n_class,
-        name="var" + str(i))   for i in range(n_vars)]
+    list_da = [
+        _create_datarray(
+            obs_number=obs_number,
+            obs_dim=obs_dim,
+            data_type=data_type,
+            aux_shape=aux_shape,
+            aux_dims=aux_dims,
+            n_class=n_class,
+            name="var" + str(i),
+        )
+        for i in range(n_vars)
+    ]
     ds = xr.merge(list_da)
     return ds
 
 
-def create_spatial2d_dataset(obs_number=1000,
-                             obs_dim="time",
-                             data_type="continuous",
-                             aux_shape=(10,10),
-                             aux_dims=("x", "y"),
-                             n_class=2,
-                             n_vars=3):
+def create_spatial2d_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10),
+    aux_dims=("x", "y"),
+    n_class=2,
+    n_vars=3,
+):
     """Create spatial 2D Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
 
 
-def create_spatial3d_dataset(obs_number=1000,
-                             obs_dim="time",
-                             data_type="continuous",
-                             aux_shape=(10, 10, 10),
-                             aux_dims=("x", "y", "z"),
-                             n_class=2,
-                             n_vars=3):
+def create_spatial3d_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10, 10),
+    aux_dims=("x", "y", "z"),
+    n_class=2,
+    n_vars=3,
+):
     """Create spatial 3D Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
 
 
-def create_timeseries_dataset(obs_number=1000,
-                              obs_dim="time",
-                              data_type="continuous",
-                              aux_shape=(100),
-                              aux_dims=("stations"),
-                              n_class=2,
-                              n_vars=3):
+def create_timeseries_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(100),
+    aux_dims=("stations"),
+    n_class=2,
+    n_vars=3,
+):
     """Create time series Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
 
 
-def create_timeseries_forecast_dataset(obs_number=1000,
-                                       obs_dim="time",
-                                       data_type="continuous",
-                                       aux_shape=(10, 48),
-                                       aux_dims=("stations", "forecast_lead_time"),
-                                       n_class=2,
-                                       n_vars=3):
+def create_timeseries_forecast_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 48),
+    aux_dims=("stations", "forecast_lead_time"),
+    n_class=2,
+    n_vars=3,
+):
     """Create time series forecast Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
 
 
-def create_multimodel_dataset(obs_number=1000,
-                            obs_dim="time",
-                            data_type="continuous",
-                            aux_shape=(10,10, 5),
-                            aux_dims=("x", "y", "model"),
-                            n_class=2,
-                            n_vars=3):
+def create_multimodel_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10, 5),
+    aux_dims=("x", "y", "model"),
+    n_class=2,
+    n_vars=3,
+):
     """Create multimodel Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
 
 
-def create_ensemble_dataset(obs_number=1000,
-                            obs_dim="time",
-                            data_type="continuous",
-                            aux_shape=(10, 10, 24),
-                            aux_dims=("x", "y", "realization"),
-                            n_class=2,
-                            n_vars=3):
+def create_ensemble_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10, 24),
+    aux_dims=("x", "y", "realization"),
+    n_class=2,
+    n_vars=3,
+):
     """Create ensemble Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
 
 
-def create_ensemble_forecast_dataset(obs_number=1000,
-                                     obs_dim="time",
-                                     data_type="continuous",
-                                     aux_shape=(10, 10, 24, 48),
-                                     aux_dims=("x", "y", "realization", "leadtime"),
-                                     n_class=2,
-                                     n_vars=3):
+def create_ensemble_forecast_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10, 24, 48),
+    aux_dims=("x", "y", "realization", "leadtime"),
+    n_class=2,
+    n_vars=3,
+):
     """Create ensemble forecast Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
 
 
-def create_multimodel_ensemble_forecast_dataset(obs_number=1000,
-                                                obs_dim="time",
-                                                data_type="continuous",
-                                                aux_shape=(10, 10, 5, 24, 48),
-                                                aux_dims=("x", "y", "model", "realization", "leadtime"),
-                                                n_class=2,
-                                                n_vars=3):
+def create_multimodel_ensemble_forecast_dataset(
+    obs_number=1000,
+    obs_dim="time",
+    data_type="continuous",
+    aux_shape=(10, 10, 5, 24, 48),
+    aux_dims=("x", "y", "model", "realization", "leadtime"),
+    n_class=2,
+    n_vars=3,
+):
     """Create multimodel ensemble forecast Dataset."""
-    ds = _create_dataset(obs_number=obs_number,
-                         obs_dim=obs_dim,
-                         aux_shape=aux_shape,
-                         aux_dims=aux_dims,
-                         n_class=n_class,
-                         n_vars=n_vars)
+    ds = _create_dataset(
+        obs_number=obs_number,
+        obs_dim=obs_dim,
+        aux_shape=aux_shape,
+        aux_dims=aux_dims,
+        n_class=n_class,
+        n_vars=n_vars,
+    )
     return ds
-
 
 
 #### For testing:
@@ -246,4 +280,3 @@ def create_multimodel_ensemble_forecast_dataset(obs_number=1000,
 
 # aux_shape=(1)
 # aux_dims=('x')
-
