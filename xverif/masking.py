@@ -7,6 +7,7 @@ Created on Fri Oct 13 16:44:07 2023
 """
 import numpy as np
 import xarray as xr
+import
 
 
 def _get_function_keys(): 
@@ -230,10 +231,43 @@ def mask_dataarrays(pred, obs, masking_options):
     return pred, obs
 
 
-def mask_datasets(pred, obs, masking_options): 
-    pass 
+def mask_datasets(pred, obs, masking_options):
+    """ Mask datasets according to masking_options.
 
-# Dataset case 
-# - Different options per variable ! 
-#     --> {var1: {}, var2: {}}
-#     --> var not specified set to default masking options 
+    Accepted masking_options format: 
+    --> {var1: {masking_option}, var2: {masking_option}}
+    --> [{'nan': True}, {'values': 0, conditioned_on='both'})
+    
+    """
+    masking_options = _check_per_dataset_masking_options(pred, masking_options)
+    for var, var_masking_options in masking_options.items():
+        masked_pred, masked_obs = mask_dataarrays(pred[var], obs[var], masking_options[var])
+        pred[var] = masked_pred
+        obs[var] = masked_obs
+    return pred, obs
+
+
+def _is_per_variable_masking_options(pred, masking_options):
+    if isinstance(masking_options, dict):
+        valid_variables = list(pred.data_vars)
+        unvalid_keys =  [key for key in masking_options.keys() if key not in valid_variables]
+        if len(unvalid_keys) == 0 and len(masking_options) != 0:
+            specified_variables = list(masking_options.keys())
+            if len(specified_variables) != len(valid_variables):
+                unspecified_variables =  [var for var in valid_variables if var not in specified_variables]
+                warnings.warn(f"No masking options specified for {unspecified_variables} variables.") # TODO: xverif warning class
+            return True
+        else: 
+            return False 
+    return False 
+
+
+def _check_per_dataset_masking_options(pred, masking_options):
+    if _is_per_variable_masking_options(pred, masking_options): 
+        for var, var_masking_options in masking_options.items(): 
+            masking_options[var] = check_masking_options(var_masking_options)
+    else: 
+        masking_options = check_masking_options(masking_options)
+        masking_options = {var: masking_options.copy(deep=True)  for var in list(pred.data_vars)}
+    return masking_options
+

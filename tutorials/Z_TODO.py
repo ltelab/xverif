@@ -9,11 +9,22 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-# Implementation
-# Loop
-# Stacked --> Vectorized !
+# Test Dataset masking 
 
-#### - Defaults choice
+# Implement Numpy Dropping Class 
+
+# Update implementation argument 
+# --> Loop, Vectorized
+# --> Rename Stacked --> Vectorized !
+
+# Rename forecast_type --> data_type 
+
+# Deprecate skipna, skipinf, skipzeros 
+
+# Working loop and vectorized solutions 
+# - Deterministic Continuous and Binary 
+
+# Define better naming dimenions 
 # - aggregating_dim --> None?
 # - Change name of aggregating_dim
 # - Change name of sample and aux dimensions

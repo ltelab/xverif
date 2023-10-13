@@ -7,8 +7,8 @@ Created on Tue Jun 13 14:48:21 2023.
 """
 import typing as tp
 from importlib import import_module
-
 import xarray as xr
+from xverif.masking import mask_datasets
 
 ValidForecastType = tp.Literal[
     "continuous", "categorical_binary", "categorical_multiclass"
@@ -136,6 +136,7 @@ def deterministic(
     skip_na=True,
     skip_infs=True,
     skip_zeros=True,
+    skip_options=None,
 ):
     """Compute deterministic metrics."""
     pred, obs = ensure_common_xarray_format(pred, obs)  # _check_args(pred, obs)
@@ -144,6 +145,11 @@ def deterministic(
     _check_shared_dims(aggregating_dim, pred, obs)
     _check_forecast_type(forecast_type)
 
+    # Define default skip_options options 
+    # TODO: - Set default based on data_type, ... 
+    if skip_options is None:
+        skip_options = [{'nan': True}, {'inf': True}]
+    
     # Check that obs dims is equal or subset of pred dims
     # TODO:
 
@@ -152,14 +158,14 @@ def deterministic(
 
     # Align Datasets
     pred, obs = align_xarray_objects(pred, obs)
-
-    # if implementation="vectorized":
-    # # Broadcast obs to pred (for preprocessing)
-    # - Creates a view, not a copy !
-    # obs = obs.broadcast_like(pred)
-
-    # # Mask datasets
-    # pred, obs = mask_datasets(pred, obs, masking_options)
+    
+    # Apply masking for vectorized computation 
+    if implementation == "vectorized":
+        # Broadcast obs to pred (for preprocessing)
+        # - Creates a view, not a copy !
+        obs = obs.broadcast_like(pred)
+        # Mask datasets
+        pred, obs = mask_datasets(pred, obs, masking_options=skip_options)
 
     # Convert Dataset to DataArray
     # - Enable to vectorize also over variables if numpy
