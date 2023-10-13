@@ -634,10 +634,10 @@ def fss_compute(fss):
     out: float
         The computed FSS value.
     """
-    numer = fss["sum_fct_sq"] - 2.0 * fss["sum_fct_obs"] + fss["sum_obs_sq"]
-    denom = fss["sum_fct_sq"] + fss["sum_obs_sq"]
+    numerator = fss["sum_fct_sq"] - 2.0 * fss["sum_fct_obs"] + fss["sum_obs_sq"]
+    denominator = fss["sum_fct_sq"] + fss["sum_obs_sq"]
 
-    return 1.0 - numer / denom
+    return 1.0 - numerator / denominator
 
 
 def _wavelet_decomp(X, w):

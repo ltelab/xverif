@@ -91,3 +91,7 @@ target-version = "py310"
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.codespell]
+    skip = 'pyproject.toml'
+    ignore-words-list = 'MAPE'

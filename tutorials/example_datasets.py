@@ -169,7 +169,7 @@ d = get_available_metrics()
 #  with dask.config.set(**{'array.slicing.split_large_chunks': True}) :
 
 
-# Emulate xr_apply_ufunc dimension reordering in continous ndarray
+# Emulate xr_apply_ufunc dimension reordering in continuous ndarray
 # pred = pred.transpose(..., "x","y")["var1"].data
 # obs = np.expand_dims(obs.transpose(..., "x","y")["var1"].data, axis=[1,2])
 # axis = [3, 4]

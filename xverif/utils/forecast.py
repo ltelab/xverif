@@ -106,7 +106,7 @@ def rechunk_forecasts_for_verification(
         force=force,
     )
     ##------------------------------------------------------------------------.
-    # Load rechunked dataset (contiguous over forecast referece time, chunked over space)
+    # Load rechunked dataset (contiguous over forecast reference time, chunked over space)
     ds = xr.open_zarr(intermediate_store, chunks="auto")
     ##------------------------------------------------------------------------.
     # Reshape

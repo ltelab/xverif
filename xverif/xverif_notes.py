@@ -63,7 +63,7 @@ Created on Sat Feb 27 15:51:43 2021.
 ####--------------------------------------------------------------------------.
 #### Preprocessing by chunk
 # - Point/Pixel-wise
-#   --> Preprocessing apply to each pixel timeseries separetely
+#   --> Preprocessing apply to each pixel timeseries separately
 #   --> ds_forecast.chunk({"time": -1}
 
 # - Spatial chunks
@@ -128,7 +128,7 @@ Created on Sat Feb 27 15:51:43 2021.
 
 ####--------------------------------------------------------------------------.
 #### - pandas:
-# - example to_xarray for exploting xverif ...
+# - example to_xarray for exploiting xverif ...
 # - exploit stacked code ...
 
 ####--------------------------------------------------------------------------.

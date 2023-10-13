@@ -147,8 +147,8 @@ def deterministic(
     # Check that obs dims is equal or subset of pred dims
     # TODO:
 
-    # Check homogenous datasets
-    # TODO: and suggest function that return list of homogenous datasets !
+    # Check homogeneous datasets
+    # TODO: and suggest function that return list of homogeneous datasets !
 
     # Align Datasets
     pred, obs = align_xarray_objects(pred, obs)
