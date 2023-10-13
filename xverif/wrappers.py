@@ -7,7 +7,9 @@ Created on Tue Jun 13 14:48:21 2023.
 """
 import typing as tp
 from importlib import import_module
+
 import xarray as xr
+
 from xverif.masking import mask_datasets
 
 ValidForecastType = tp.Literal[
@@ -145,11 +147,11 @@ def deterministic(
     _check_shared_dims(aggregating_dim, pred, obs)
     _check_forecast_type(forecast_type)
 
-    # Define default skip_options options 
-    # TODO: - Set default based on data_type, ... 
+    # Define default skip_options options
+    # TODO: - Set default based on data_type, ...
     if skip_options is None:
-        skip_options = [{'nan': True}, {'inf': True}]
-    
+        skip_options = [{"nan": True}, {"inf": True}]
+
     # Check that obs dims is equal or subset of pred dims
     # TODO:
 
@@ -158,8 +160,8 @@ def deterministic(
 
     # Align Datasets
     pred, obs = align_xarray_objects(pred, obs)
-    
-    # Apply masking for vectorized computation 
+
+    # Apply masking for vectorized computation
     if implementation == "vectorized":
         # Broadcast obs to pred (for preprocessing)
         # - Creates a view, not a copy !

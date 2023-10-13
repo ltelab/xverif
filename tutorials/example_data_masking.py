@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 13 16:42:32 2023
+Created on Fri Oct 13 16:42:32 2023.
 
 @author: ghiggi
 """
+import dask
 import numpy as np
 import xarray as xr
-import dask
 from xverif.masking import MaskingDataArrays
 
-#### Example 
-### Numpy-based 
+#### Example
+### Numpy-based
 pred_np = np.array([1.0, 1.0, 2.0, np.nan, 4.0, np.inf])
 obs_np = np.array([1.0, 0.5, 2.2, np.nan, 3.8, np.inf])
 
@@ -28,12 +28,12 @@ pred = xr.DataArray(pred_dask, dims="dim", coords={"dim": range(pred_dask.shape[
 obs = xr.DataArray(obs_dask, dims="dim", coords={"dim": range(obs_dask.shape[0])})
 
 masking_options = [
-    {'nan': True},
-    {'inf': True, 'conditioned_on': 'any'},
-    {'equal_values': False},
-    {'values': 0, 'conditioned_on': 'both'},
-    {'below_threshold': 1.5, 'conditioned_on': 'both'},
-    {'above_threshold': 3, 'conditioned_on': 'obs'},
+    {"nan": True},
+    {"inf": True, "conditioned_on": "any"},
+    {"equal_values": False},
+    {"values": 0, "conditioned_on": "both"},
+    {"below_threshold": 1.5, "conditioned_on": "both"},
+    {"above_threshold": 3, "conditioned_on": "obs"},
 ]
 
 masking = MaskingDataArrays(pred, obs, masking_options=masking_options)
@@ -46,4 +46,4 @@ pred.compute()
 
 pred, obs = MaskingDataArrays(pred, obs, masking_options={"nan": True}).apply()
 
-masking_options={"nan": True}
+masking_options = {"nan": True}
