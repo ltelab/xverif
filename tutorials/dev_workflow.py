@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 13 12:02:13 2023
+Created on Fri Oct 13 12:02:13 2023.
 
 @author: ghiggi
 """
@@ -11,10 +11,10 @@ import xverif
 from xverif.datasets import (
     create_ensemble_dataset,
     create_ensemble_forecast_dataset,
-    create_multimodel_dataset,
-    create_multimodel_ensemble_forecast_dataset,
+    # create_multimodel_dataset,
+    # create_multimodel_ensemble_forecast_dataset,
     create_spatial2d_dataset,
-    create_spatial3d_dataset,
+    # create_spatial3d_dataset,
     create_timeseries_dataset,
     create_timeseries_forecast_dataset,
 )
@@ -92,7 +92,7 @@ pred = pred.chunk(
 )
 obs = obs.chunk({"x": -1, "y": -1})
 
-# TODO: check auxiliary dimensions are chunked      (do not rechunk ... but chunk to parellelize computations)
+# TODO: check auxiliary dimensions are chunked      (do not rechunk ... but chunk to parallelize computations)
 # TODO: check that aggregating dims are not chunked (rechunk to -1)
 
 ds_skills = xverif.deterministic(
@@ -126,6 +126,7 @@ ds_skills.data.visualize()
 
 ####--------------------------------------------------------------------------.
 from xverif.metrics.deterministic.continuous_stacked import get_available_metrics
+
 d = get_available_metrics()
 
 

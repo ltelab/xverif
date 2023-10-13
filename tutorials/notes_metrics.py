@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 13 12:08:07 2023
+Created on Fri Oct 13 12:08:07 2023.
 
 @author: ghiggi
 """
@@ -154,7 +154,7 @@ Created on Fri Oct 13 12:08:07 2023
 # --> https://neptune.ai/blog/evaluation-metrics-binary-classification
 
 ####--------------------------------------------------------------------------.
-##### Categorical multiclass 
+##### Categorical multiclass
 # --> If probababilities, add tool to predict classes using various probabilities (--> prob_threshold dimension)
 # --> Expect classes (0,1) or (0 to n) in metrics calculations
 

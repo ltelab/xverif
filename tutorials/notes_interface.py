@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 13 12:22:02 2023
+Created on Fri Oct 13 12:22:02 2023.
 
 @author: ghiggi
 """
@@ -13,18 +13,18 @@ Created on Fri Oct 13 12:22:02 2023
 #### Data, Metric, Support Type
 # data_type: binary, multiclass, ordered, probability, continuous
 # metric_type: deterministic, probabilistic (spatial, temporal)
-# support_type: point, spatial, temporal 
+# support_type: point, spatial, temporal
 
 ####--------------------------------------------------------------------------.
 #### Interface
-import xverif 
 import xarray as xr
+import xverif
 
-metric_type=None
-data_type=None
-xverif.available_metrics(metric_type, data_type) 
-    
-xverif.deterministic.available_metrics(data_type) 
+metric_type = None
+data_type = None
+xverif.available_metrics(metric_type, data_type)
+
+xverif.deterministic.available_metrics(data_type)
 xverif.probabilistic.available_metrics(data_type)
 
 xverif.deterministic.available_data_type()
@@ -40,20 +40,19 @@ obs = xr.Dataset()
 ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
-    # Data and metric informations
+    # Data and metric information
     data_type="continuous",
     support_type="point",
- 
-    aggregating_dim=["x", "y"], # TODO: rename
-    # Optional argument 
-    support_type_kwargs = {},
-    metrics=None, 
+    aggregating_dim=["x", "y"],  # TODO: rename
+    # Optional argument
+    support_type_kwargs={},
+    metrics=None,
     # Preprocessing
     skip_na=True,
     skip_infs=True,
     skip_zeros=True,
-    # Backend options 
-    implementation=None, # TODO: support_type="point" --> stacked
+    # Backend options
+    implementation=None,  # TODO: support_type="point" --> stacked
 )
 
 # ds_skills = xverif.probabilistic()
@@ -75,24 +74,24 @@ ds_skills = xverif.deterministic(
 ####--------------------------------------------------------------------------.
 #### TODOs
 # TODO (spatial, temporal)
-# --> Can be deterministic or probabilistic metrics 
+# --> Can be deterministic or probabilistic metrics
 # --> Use of support_type ?
 
-# TODO Distribution metrics 
-# --> in which <XXXX_type>? 
+# TODO Distribution metrics
+# --> in which <XXXX_type>?
 
-# TODO DESIGN 
+# TODO DESIGN
 # --> How to apply to single sample vectors --> xverif.compute_metric("MSE", pred, obs)
 # --> How to apply single metric function --> xverif.metric("MSE)
 # --> Pandas interface: to_xarray for exploiting xverif ?
 
-# TODO: 
-# - Statistical tests 
+# TODO:
+# - Statistical tests
 # - Resampling / Bootstrapping
-# - Distribution metrics? 
+# - Distribution metrics?
 
 
-# Others possibilites 
+# Others possibilities
 # - YAML file with all available metrics
 #   - Path to module, file
 
