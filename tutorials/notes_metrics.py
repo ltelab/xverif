@@ -1,22 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Created on Sat Feb 27 15:51:43 2021.
+Created on Fri Oct 13 12:08:07 2023
 
 @author: ghiggi
 """
-# https://github.com/xarray-contrib/xskillscore/tree/main/xskillscore/core
-
-
-# https://github.com/pySTEPS/pysteps/tree/master/pysteps/verification
-# https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/interface.pySTEPS
-
-# Preprocessing
-# https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/utils.py
-
-# Interfaces
-# - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/interface.py
-
-####--------------------------------------------------------------------------.
 #################
 #### Metrics ####
 #################
@@ -42,10 +30,6 @@ Created on Sat Feb 27 15:51:43 2021.
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/ensscores.py
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/probscores.py
 
-# Probabilistic categorical
-
-# Distribution metrics
-
 # Spatial metrics
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/salscores.py
 # - https://github.com/pySTEPS/pysteps/blob/master/pysteps/verification/spatialscores.py
@@ -56,112 +40,6 @@ Created on Sat Feb 27 15:51:43 2021.
 
 # Effective sample size
 # - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L109
-
-# resampling/bootstrapping:
-# - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/resampling.py
-
-####--------------------------------------------------------------------------.
-#### Preprocessing by chunk
-# - Point/Pixel-wise
-#   --> Preprocessing apply to each pixel timeseries separately
-#   --> ds_forecast.chunk({"time": -1}
-
-# - Spatial chunks
-#   --> Preprocessing apply to spatial region
-#   --> If given timestep only one pixel nan (in obs or pred), all timesteps becomes nan
-#   --> Or metrics deals with np.nan (but not efficient?)
-#   --> Or looping over dimensions with numba and avoid vectorization?
-
-
-####--------------------------------------------------------------------------.
-#### Dimension names
-
-## aggregating_dims --> TODO argument name
-# - check available in both datasets
-# - time if want to calculate i.e. pixelwise the skills
-# - x, y if want to calculate overall metrics at each timestep
-
-## support_dims
-# - dims present in both dataset which are not aggregating dims
-
-## broadcast_dims
-# - dims present in only 1 dataset
-# - If obs to be broadcasted on pred (then become support_dims)
-
-####--------------------------------------------------------------------------.
-##############
-#### TODO ####
-##############
-#### - Defaults choice
-# - aggregating_dim --> None?
-# - Change name of aggregating_dim
-# - Change name of sample and aux dimensions
-
-####--------------------------------------------------------------------------.
-#### Daskify functions
-
-
-####--------------------------------------------------------------------------.
-#### Numba functions
-
-
-####--------------------------------------------------------------------------.
-#### - Suppress warnings
-"invalid value encountered in divide"  # division by 0
-"Degrees of freedom <= 0 for slice"  # (when all np.nan in nanstd)
-"All-NaN slice encountered"
-"invalid value encountered in double_scalars"
-
-# sklearn way to deal with division by 0
-# https://github.com/scikit-learn/scikit-learn/blob/364c77e047ca08a95862becf40a04fe9d4cd2c98/sklearn/metrics/_classification.py#L1301
-
-####--------------------------------------------------------------------------.
-#### - Categorical verification
-# --> Binary or multiclass (separated)
-# --> If probababilities, add tool to predict classes using various probabilities (--> prob_threshold dimension)
-# --> Expect classes (0,1) or (0 to n) in metrics calculations
-
-# https://www.cawcr.gov.au/projects/verification/
-
-####--------------------------------------------------------------------------.
-#### - Weights options
-
-####--------------------------------------------------------------------------.
-#### - pandas:
-# - example to_xarray for exploiting xverif ...
-# - exploit stacked code ...
-
-####--------------------------------------------------------------------------.
-#### Dataset preprocessing
-# Preprocessing on stacked 2D array (per chunk within ufunc) or native Dataset ?
-# If loop over 1D, drop nan. If vectorize, need to use nanfunctions
-
-
-# --> Drop nans
-# --> Drop inf
-# Drop or masking operations for continuous verification
-# - Drop pairwise_equal_elements (i.e. 0)
-# - Keep only within a value range  (single conditions (or), double (and))
-#   --> Add option for multiple ranges ? >0.5, >30, >60
-#   --> If yes, means Dataset size changes
-# --> Dropping cause array size to change
-# --> Masking (with np.nan), not dropping nan and metric dealing with nan?
-
-
-# conditioning: {None, "single", "double"}, optional
-# The type of conditioning used for the verification.
-# The default, conditioning=None, includes all pairs. With
-# conditioning="single", only pairs with either pred or obs > thr are
-# included. With conditioning="double", only pairs with both pred and
-# obs > thr are included.
-
-
-####--------------------------------------------------------------------------.
-#### Interface
-# xverif.metric("MSE", pred, obs, ...)
-# - YAML file with all available metrics
-# - Path to module, file
-
 
 ####--------------------------------------------------------------------------.
 #### Continuous verification
@@ -228,7 +106,7 @@ Created on Sat Feb 27 15:51:43 2021.
 
 
 ####--------------------------------------------------------------------------.
-### Categorical binary
+#### Categorical binary
 # - Gerrity skill Score
 # --> https://rdrr.io/github/joaofgoncalves/SegOptim/man/GerritySkillScore.html
 # --> https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/contingency.py#L735
@@ -266,13 +144,24 @@ Created on Sat Feb 27 15:51:43 2021.
 
 # - https://mmuratarat.github.io/2020-01-25/multilabel_classification_metrics
 
-### Categorical binary (probability)
+####--------------------------------------------------------------------------.
+#### Categorical binary (probability)
 # - GINI
 # - ROC-AUC score
 # - logloss
 # - brier score
 # - Kolmogorov-Smirnov statistic
 # --> https://neptune.ai/blog/evaluation-metrics-binary-classification
+
+####--------------------------------------------------------------------------.
+##### Categorical multiclass 
+# --> If probababilities, add tool to predict classes using various probabilities (--> prob_threshold dimension)
+# --> Expect classes (0,1) or (0 to n) in metrics calculations
+
+# https://www.cawcr.gov.au/projects/verification/
+
+####--------------------------------------------------------------------------.
+#### - Weights options
 
 
 ####--------------------------------------------------------------------------.
