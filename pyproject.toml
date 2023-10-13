@@ -95,4 +95,4 @@ convention = "numpy"
 
 [tool.codespell]
     skip = 'pyproject.toml'
-    ignore-words-list = 'MAPE'
+    ignore-words-list = 'mape,otherlowercasewords'
