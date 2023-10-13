@@ -153,6 +153,14 @@ def deterministic(
     # Align Datasets
     pred, obs = align_xarray_objects(pred, obs)
 
+    # if implementation="vectorized":
+    # # Broadcast obs to pred (for preprocessing)
+    # - Creates a view, not a copy !
+    # obs = obs.broadcast_like(pred)
+
+    # # Mask datasets
+    # pred, obs = mask_datasets(pred, obs, masking_options)
+
     # Convert Dataset to DataArray
     # - Enable to vectorize also over variables if numpy
     pred = ensure_dataarray(pred)

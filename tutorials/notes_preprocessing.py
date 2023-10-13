@@ -5,32 +5,81 @@ Created on Fri Oct 13 12:24:32 2023.
 
 @author: ghiggi
 """
+#### Loop vs Vectorized Implementations
+# Loop implementation
+# --> Does not expect np.nan, np.inf
+# --> Discard np.nan, np.inf, pairwise equal values, ... (if asked)
+# --> NaN dropping INSIDE the metric computation routine
+
+# Vectorized implementation
+# --> Does expect np.nan
+# --> Does not expect np.inf
+# --> Set np.inf,pairwise equal values, ... to np.nan (if asked)
+# --> NaN masking OUTSIDE the metric computation routine
+# --> NOT IMPLEMENTED operations: skipna=False !
+#     --> BUT output metrics can be masked afterwards
+
+# Computational aspects
+# - If Dataset contains lot of np.nan and data that should be discarded/masked,
+#   implementation="loop" might be faster.
+# - Verification considering multiple below/above thresholds
+#   - either requires calling the xverif.<function> multiple times.
+# TODO: either call XXXX to add thresholds dimension to Dataset before calling xverif !
+# --> Useful for continuous, probability data_type !
+# --> Similar for multiclass option: one vs. others !
+
+## Technical points
+# Vectorized implementation
+# - Chunks between pred and obs must be aligned
+# - Expects dask arrays
+# - Masking is done by chunk !
+
+# Loop implementation
+# - Expect pred and obs 1D numpy vectors
+
+# pandas & xarray functions only provide the skipna argument
+
 ####--------------------------------------------------------------------------.
-#### Dataset preprocessing
-# Preprocessing on stacked 2D array (per chunk within ufunc) or native Dataset ?
-# If loop over 1D, drop nan. If vectorize, need to use nanfunctions
+#### Masking/Dropping/Skip options
+# skip_na
+# skip_inf
+# skip_equals
+
+#### masking_options
+# --> List
+# - nan: True
+# - inf: True
+# - equal_values: False
+# - values : [ ] (int, float, list)
+# - above_threshold
+# - below_threshold
+# --> [], {} --> Do nothing
+
+# Conditioning option
+# - conditioned_on: 'both', 'any', 'pred', 'obs',
 
 
-# --> Drop nans
-# --> Drop inf
-# Drop or masking operations for continuous verification
-# - Drop pairwise_equal_elements (i.e. 0)
-# - Keep only within a value range  (single conditions (or), double (and))
-#   --> Add option for multiple ranges ? >0.5, >30, >60
-#   --> If yes, means Dataset size changes
-# --> Dropping cause array size to change
-# --> Masking (with np.nan), not dropping nan and metric dealing with nan?
+# Possible cases:
+# - Various options and conditions
+#   --> Mask values=[0] conditioned_on 'both',
+#   --> Mask 'below_threshold' conditioned_on on 'obs',
+#   --> Mask infinite conditioned_on 'any'
+
+# - Mask outside a interval
+#   - Specify above_threshold and below_threshold
+
+# - Mask inside an interval
+#   --> TODO: NOT IMPLEMENTED
+
+# Dataset case
+# - Different options per variable !
+#     --> {var1: {}, var2: {}}
+#     --> var not specified set to default masking options
 
 
-# conditioning: {None, "single", "double"}, optional
-# The type of conditioning used for the verification.
-# The default, conditioning=None, includes all pairs. With
-# conditioning="single", only pairs with either pred or obs > thr are
-# included. With conditioning="double", only pairs with both pred and
-# obs > thr are included.
-
-# Preprocessing
-# https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/utils.py
+### Vectorized thresholds
+# - Masking above/below multiple thresholds
+#   --> Add new dimension corresponding to the masking condition !
 
 
 ####--------------------------------------------------------------------------.

@@ -388,7 +388,9 @@ def _xr_apply_routine(
 
     # Broadcast obs to pred
     # - Creates a view, not a copy !
-    obs = obs.broadcast_like(pred)
+    obs = obs.broadcast_like(
+        pred
+    )  # TODO: broadcast Dataset ... so to preprocessing per variable !
     # obs_broadcasted['var0'].data.flags # view (Both contiguous are False)
     # obs_broadcasted['var0'].data.base  # view (Return array and not None)
 

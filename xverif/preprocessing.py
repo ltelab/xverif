@@ -136,7 +136,6 @@ def time_at_inittime_leadtime(
 def temporal_broadcast_observations(
     obs: xr.DataArray | xr.Dataset,
     fcts: xr.DataArray | xr.Dataset,
-    /,
     obs_time_name: str = "time",
     fcts_init_time_name: str = "forecast_reference_time",
     fcts_lead_time_name: str = "lead_time",
