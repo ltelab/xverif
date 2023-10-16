@@ -24,7 +24,7 @@ Created on Fri Oct 13 12:26:23 2023.
 # Working loop and vectorized solutions
 # - Deterministic Continuous and Binary
 
-# Define better naming dimenions
+# Define better naming dimensions
 # - aggregating_dim --> None?
 # - Change name of aggregating_dim
 # - Change name of sample and aux dimensions

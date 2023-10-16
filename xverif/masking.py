@@ -5,6 +5,7 @@ Created on Fri Oct 13 16:44:07 2023.
 
 @author: ghiggi
 """
+import copy
 import warnings
 
 import numpy as np
@@ -100,6 +101,7 @@ def _check_masking_option(masking_option):
 
 
 def is_valid_masking_option(masking_option):
+    """Check argument validity of a masking option."""
     try:
         _check_masking_option(masking_option)
         validity = True
@@ -109,6 +111,7 @@ def is_valid_masking_option(masking_option):
 
 
 def check_masking_options(masking_options):
+    """Check validity of DataArray masking options list."""
     if isinstance(masking_options, type(None)):
         return []
     if isinstance(masking_options, dict):
@@ -136,7 +139,10 @@ def _get_masking_option_func_key(masking_option):
 
 
 class MaskingDataArrays:
+    """MaskDataArray class."""
+
     def __init__(self, pred, obs, masking_options=None, masking_value=np.nan):
+        """Initialize the Masking Object."""
         masking_options = check_masking_options(masking_options)
         # TODO: check masking_value same type of pred and obs
         self.pred = pred
@@ -145,6 +151,7 @@ class MaskingDataArrays:
         self.masking_options = masking_options
 
     def apply(self):
+        """Apply the masking options."""
         if len(self.masking_options) == 0:
             return self.pred, self.obs
 
@@ -179,6 +186,7 @@ class MaskingDataArrays:
         return masked_pred, masked_obs
 
     def mask_nan(self, pred, obs, conditioned_on, masking_value):
+        """Mask nan values."""
         condition_map = {
             "obs": lambda: np.isnan(obs),
             "pred": lambda: np.isnan(pred),
@@ -191,6 +199,7 @@ class MaskingDataArrays:
         return pred, obs
 
     def mask_inf(self, pred, obs, conditioned_on, masking_value):
+        """Mask inf values."""
         condition_map = {
             "obs": lambda: np.isinf(obs),
             "pred": lambda: np.isinf(pred),
@@ -203,12 +212,14 @@ class MaskingDataArrays:
         return pred, obs
 
     def mask_equal_values(self, pred, obs, masking_value, conditioned_on="dummy"):
+        """Mask the values which are equal in both DataArrays."""
         isequal = pred == obs
         pred = pred.where(~isequal, other=masking_value)
         obs = obs.where(~isequal, other=masking_value)
         return pred, obs
 
     def mask_values(self, pred, obs, values, conditioned_on, masking_value):
+        """Mask the specified values."""
         if isinstance(values, (int, float)):
             values = [values]
         condition_map = {
@@ -225,6 +236,7 @@ class MaskingDataArrays:
     def mask_above_threshold(
         self, pred, obs, above_threshold, conditioned_on, masking_value
     ):
+        """Mask values above the specified threshold."""
         condition_map = {
             "obs": lambda: obs > above_threshold,
             "pred": lambda: pred > above_threshold,
@@ -241,6 +253,7 @@ class MaskingDataArrays:
     def mask_below_threshold(
         self, pred, obs, below_threshold, conditioned_on, masking_value
     ):
+        """Mask values below the specified threshold."""
         condition_map = {
             "obs": lambda: obs < below_threshold,
             "pred": lambda: pred < below_threshold,
@@ -260,6 +273,7 @@ class MaskingDataArrays:
 
 
 def mask_dataarrays(pred, obs, masking_options):
+    """Mask a DataArray based on the given masking options."""
     pred, obs = MaskingDataArrays(pred, obs, masking_options=masking_options).apply()
     return pred, obs
 
@@ -283,6 +297,7 @@ def mask_datasets(pred, obs, masking_options):
 
 
 def _is_per_variable_masking_options(pred, masking_options):
+    """Check if the masking_options is specific to Dataset variables."""
     if isinstance(masking_options, dict):
         valid_variables = list(pred.data_vars)
         unvalid_keys = [
@@ -305,12 +320,13 @@ def _is_per_variable_masking_options(pred, masking_options):
 
 
 def _check_per_dataset_masking_options(pred, masking_options):
+    """Check and ensure that the masking_options is defined per Dataset variable."""
     if _is_per_variable_masking_options(pred, masking_options):
         for var, var_masking_options in masking_options.items():
             masking_options[var] = check_masking_options(var_masking_options)
     else:
         masking_options = check_masking_options(masking_options)
         masking_options = {
-            var: masking_options.copy(deep=True) for var in list(pred.data_vars)
+            var: copy.deepcopy(masking_options) for var in list(pred.data_vars)
         }
     return masking_options
