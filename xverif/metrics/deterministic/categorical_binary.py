@@ -18,15 +18,15 @@ def _get_metrics(pred, obs, drop_options=None):
 
     This function expects pred and obs to be 1D vector of same size.
     """
-    # Preprocess data 
+    # Preprocess data
     pred = pred.flatten()
     obs = obs.flatten()
     pred, obs = DropData(pred, obs, drop_options=drop_options).apply()
-    
+
     # If not non-NaN data, return a vector of nan data
     if len(pred) == 0:
         return np.ones(12) * np.nan
-    
+
     # calculate number hits, misses, false alarms, correct rejects
     H = np.nansum(np.logical_and(pred == 1, obs == 1), dtype="float64")
     M = np.nansum(np.logical_and(pred == 0, obs == 1), dtype="float64")

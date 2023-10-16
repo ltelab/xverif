@@ -439,7 +439,7 @@ def _xr_apply_routine(
 
     # Unstack
     da_skill = da_skill.unstack("aux")
-    
+
     # Convert to skill Dataset
     ds_skill = da_skill.to_dataset(dim="skill")
 

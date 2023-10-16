@@ -9,11 +9,8 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-# Deprecate skipna, skipinf, skipzeros
 
-
-
-# Remove dims=("time") 
+# Remove dims=("time")
 # Rename forecast_type --> data_type
 # Define better naming dimensions
 # - aggregating_dim --> None?
@@ -21,7 +18,7 @@ Created on Fri Oct 13 12:26:23 2023.
 # - Change name of sample and aux dimensions
 
 
-# Return same skills between loop and vectorized 
+# Return same skills between loop and vectorized
 
 # Working loop and vectorized solutions
 # - Deterministic Continuous and Binary
@@ -31,15 +28,14 @@ Created on Fri Oct 13 12:26:23 2023.
 # Categorize / Binning
 
 
-
 ####--------------------------------------------------------------------------.
 #### Daskify functions
 
 ####--------------------------------------------------------------------------.
 #### - Suppress warnings
-FutureWarning: None value for 'chunks' is deprecated. It will raise an error in the future. Use instead '{}'
-RuntimeWarning: invalid value encountered in divides  
-RuntimeWarning: All-NaN slice encountered
+# FutureWarning: None value for "chunks" is deprecated. It will raise an error in the future. Use instead "{}"
+# RuntimeWarning: invalid value encountered in divides
+# RuntimeWarning: All-NaN slice encountered
 
 # "invalid value encountered in divide"  # division by 0
 # "Degrees of freedom <= 0 for slice"  # (when all np.nan in nanstd)

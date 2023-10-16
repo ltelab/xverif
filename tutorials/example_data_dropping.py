@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct 16 14:47:24 2023
+Created on Mon Oct 16 14:47:24 2023.
 
 @author: ghiggi
 """
@@ -26,7 +26,7 @@ drop_options = [
     {"above_threshold": 3, "conditioned_on": "obs"},
 ]
 pred, obs = DropData(pred, obs, drop_options=drop_options).apply()
- 
+
 pred, obs = DropData(pred, obs, drop_options={"nan": True}).apply()
 
 # Step by step masking
@@ -37,7 +37,7 @@ pred, obs = DropData(pred, obs).equal_values()
 pred, obs = DropData(pred, obs).above_threshold(threshold=3)
 pred, obs = DropData(pred, obs).below_threshold(threshold=3, conditioned_on="any")
 
-# Check condition drop all 
+# Check condition drop all
 drop_options = [
     {"below_threshold": 1.5, "conditioned_on": "both"},
     {"above_threshold": 1.5, "conditioned_on": "obs"},
@@ -48,7 +48,7 @@ drop_options = [
 ]
 pred, obs = DropData(pred, obs, drop_options=drop_options).apply()
 
-#------------------------------------------------------------------------------.
+# ------------------------------------------------------------------------------.
 # TODO:  NOT IMPLEMENTED
 
 # Create Xarray Dataset

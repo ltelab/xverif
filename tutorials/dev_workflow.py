@@ -59,7 +59,7 @@ ds_skills = xverif.deterministic(
     forecast_type="continuous",
     aggregating_dim="time",
     implementation="loop",
-    skip_options=skip_options
+    skip_options=skip_options,
 )
 
 
@@ -68,8 +68,8 @@ ds_skills = xverif.deterministic(
     obs=obs,
     forecast_type="continuous",
     aggregating_dim="time",
-    implementation="vectorized", 
-    skip_options=skip_options
+    implementation="vectorized",
+    skip_options=skip_options,
 )
 
 # Convert Dataset skills to Dataset Variable
@@ -136,7 +136,6 @@ ds_skills = xverif.deterministic(
 )
 
 ds_skills.data.visualize()
-
 
 
 ####--------------------------------------------------------------------------.

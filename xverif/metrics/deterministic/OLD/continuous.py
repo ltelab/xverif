@@ -19,11 +19,11 @@ def _get_metrics(pred, obs, drop_options=None):
 
     This function expects pred and obs to be 1D vector of same size
     """
-    # Preprocess data 
+    # Preprocess data
     pred = pred.flatten()
     obs = obs.flatten()
     pred, obs = DropData(pred, obs, drop_options=drop_options).apply()
-    
+
     # If not non-NaN data, return a vector of nan data
     if len(pred) == 0:
         return np.ones(27) * np.nan

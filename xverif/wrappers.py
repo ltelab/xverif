@@ -164,19 +164,19 @@ def deterministic(
         obs = obs.broadcast_like(pred)
         # Mask datasets
         pred, obs = mask_datasets(pred, obs, masking_options=skip_options)
-    
+
     # Convert Dataset to DataArray
     # - Enable to vectorize also over variables if numpy
     pred = ensure_dataarray(pred)
     obs = ensure_dataarray(obs)
-        
-    # Define routine kwargs 
+
+    # Define routine kwargs
     routine_kwargs = {}
-    if implementation == "loop": 
+    if implementation == "loop":
         routine_kwargs["drop_options"] = skip_options
-    elif implementation == "vectorized": 
+    elif implementation == "vectorized":
         routine_kwargs["metrics"] = metrics
-        
+
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(
         metric_type="deterministic",
@@ -192,7 +192,7 @@ def deterministic(
         compute=compute,
         **routine_kwargs,
     )
-    
+
     return ds_skill
 
 

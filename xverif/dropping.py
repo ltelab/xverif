@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct 16 14:46:45 2023
+Created on Mon Oct 16 14:46:45 2023.
 
 @author: ghiggi
 """
-
-import copy
-import warnings
 import numpy as np
 
 
@@ -143,9 +140,9 @@ class DropData:
 
     def __init__(self, pred, obs, drop_options=None):
         """Initialize the object."""
-        if pred.shape != obs.shape: 
+        if pred.shape != obs.shape:
             raise ValueError("'pred' and 'obs' must have same shape.")
-        if pred.ndim > 1: 
+        if pred.ndim > 1:
             raise ValueError("Expecting 1D arrays.")
         drop_options = check_drop_options(drop_options)
         self.pred = pred
@@ -272,4 +269,3 @@ class DropData:
 
 
 ####--------------------------------------------------------------------------.
- 
