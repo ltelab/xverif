@@ -12,7 +12,7 @@ from xverif import EPS
 from xverif.utils.timing import print_elapsed_time
 
 
-def _get_metrics(pred, obs, axis=None, skip_na=True, **kwargs):
+def _get_metrics(pred, obs, axis=None):
     """Deterministic metrics for continuous predictions forecasts.
 
     This function expects pred and obs to be 1D vector of same size

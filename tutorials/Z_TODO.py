@@ -9,37 +9,42 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-# Implement Numpy Dropping Class
-
-# Update implementation argument
-# --> Loop, Vectorized
-# --> Rename Stacked --> Vectorized !
-
-# Rename forecast_type --> data_type
-
 # Deprecate skipna, skipinf, skipzeros
 
-# Working loop and vectorized solutions
-# - Deterministic Continuous and Binary
 
-# Expand thresholds (category ...)
 
-# Categorize / Binning
-
+# Remove dims=("time") 
+# Rename forecast_type --> data_type
 # Define better naming dimensions
 # - aggregating_dim --> None?
 # - Change name of aggregating_dim
 # - Change name of sample and aux dimensions
+
+
+# Return same skills between loop and vectorized 
+
+# Working loop and vectorized solutions
+# - Deterministic Continuous and Binary
+
+# Expand thresholds (category ...) --> Add new dimension
+
+# Categorize / Binning
+
+
 
 ####--------------------------------------------------------------------------.
 #### Daskify functions
 
 ####--------------------------------------------------------------------------.
 #### - Suppress warnings
-"invalid value encountered in divide"  # division by 0
-"Degrees of freedom <= 0 for slice"  # (when all np.nan in nanstd)
-"All-NaN slice encountered"
-"invalid value encountered in double_scalars"
+FutureWarning: None value for 'chunks' is deprecated. It will raise an error in the future. Use instead '{}'
+RuntimeWarning: invalid value encountered in divides  
+RuntimeWarning: All-NaN slice encountered
+
+# "invalid value encountered in divide"  # division by 0
+# "Degrees of freedom <= 0 for slice"  # (when all np.nan in nanstd)
+# "All-NaN slice encountered"
+# "invalid value encountered in double_scalars"
 
 # sklearn way to deal with division by 0
 # https://github.com/scikit-learn/scikit-learn/blob/364c77e047ca08a95862becf40a04fe9d4cd2c98/sklearn/metrics/_classification.py#L1301

@@ -43,6 +43,8 @@ Created on Fri Oct 13 12:08:07 2023.
 
 ####--------------------------------------------------------------------------.
 #### Continuous verification
+# TODO robust with median and IQR / MAD
+ 
 # - MAPE == relMAE  (can exceed 100 % !)
 # - Do include SMAPE ? (bounded between 0 and 200)
 # --> https://typethepipe.com/post/symmetric-mape-is-not-symmetric/

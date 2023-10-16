@@ -376,7 +376,7 @@ def _xr_apply_routine(
 ):
     """Routine to compute metrics in a vectorized way.
 
-    The input xarray objects are first stacked to have 2D dimensions: (aux, sample).
+    The input xarray objects are first vectorized to have 2D dimensions: (aux, sample).
     Then custom preprocessing is applied to deal with NaN, non-finite values,
     samples with equals values (i.e. 0) or samples outside specific value ranges.
     The resulting array is then passed to the function computing the metrics.
@@ -388,9 +388,9 @@ def _xr_apply_routine(
 
     # Broadcast obs to pred
     # - Creates a view, not a copy !
-    obs = obs.broadcast_like(
-        pred
-    )  # TODO: broadcast Dataset ... so to preprocessing per variable !
+    # obs = obs.broadcast_like(
+    #     pred
+    # )  # TODO: broadcast Dataset ... so to preprocessing per variable !
     # obs_broadcasted['var0'].data.flags # view (Both contiguous are False)
     # obs_broadcasted['var0'].data.base  # view (Return array and not None)
 
@@ -416,7 +416,7 @@ def _xr_apply_routine(
     }
 
     # Apply ufunc
-    ds_skill = xr.apply_ufunc(
+    da_skill = xr.apply_ufunc(
         get_metrics,
         pred,
         obs,
@@ -432,13 +432,16 @@ def _xr_apply_routine(
     # Compute the skills
     if compute:
         with ProgressBar():
-            ds_skill = ds_skill.compute()
+            da_skill = da_skill.compute()
 
     # Add skill coordinates
-    ds_skill = ds_skill.assign_coords({"skill": metrics})
+    da_skill = da_skill.assign_coords({"skill": metrics})
 
     # Unstack
-    ds_skill = ds_skill.unstack("aux")
+    da_skill = da_skill.unstack("aux")
+    
+    # Convert to skill Dataset
+    ds_skill = da_skill.to_dataset(dim="skill")
 
     # Return the skill Dataset
     return ds_skill

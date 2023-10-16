@@ -48,11 +48,9 @@ ds_skills = xverif.deterministic(
     support_type_kwargs={},
     metrics=None,
     # Preprocessing
-    skip_na=True,
-    skip_infs=True,
-    skip_zeros=True,
+    skip_options=None,
     # Backend options
-    implementation=None,  # TODO: support_type="point" --> stacked
+    implementation=None,  # TODO: support_type="point" --> vectorized
 )
 
 # ds_skills = xverif.probabilistic()

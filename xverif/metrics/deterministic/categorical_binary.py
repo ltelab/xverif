@@ -9,36 +9,24 @@ import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from xverif import EPS
-
-# from xverif.preprocessing import _drop_infs, _drop_nans, _drop_pairwise_elements
+from xverif.dropping import DropData
 from xverif.utils.timing import print_elapsed_time
 
 
-def _get_metrics(pred, obs):
+def _get_metrics(pred, obs, drop_options=None):
     """Compute deterministic metrics for categorical binary predictions.
 
     This function expects pred and obs to be 1D vector of same size.
     """
-    # # Preprocess data (remove NaN if asked)
-    # if skip_na:
-    #     pred, obs, _ = _drop_nans(pred, obs)
-    #     # If not non-NaN data, return a vector of nan data
-    #     if len(pred) < 2:
-    #         return np.ones(12) * np.nan
-
-    # # Preprocess data (remove NaN if asked)
-    # if skip_infs:
-    #     pred, obs, _ = _drop_infs(pred, obs)
-    #     # If not non-NaN data, return a vector of nan data
-    #     if len(pred) < 2:
-    #         return np.ones(12) * np.nan
-
-    # if skip_zeros:
-    #     pred, obs, _ = _drop_pairwise_elements(pred, obs, element=0)
-    #     # If not non-NaN data, return a vector of nan data
-    #     if len(pred) < 1:
-    #         return np.ones(12) * np.nan
-
+    # Preprocess data 
+    pred = pred.flatten()
+    obs = obs.flatten()
+    pred, obs = DropData(pred, obs, drop_options=drop_options).apply()
+    
+    # If not non-NaN data, return a vector of nan data
+    if len(pred) == 0:
+        return np.ones(12) * np.nan
+    
     # calculate number hits, misses, false alarms, correct rejects
     H = np.nansum(np.logical_and(pred == 1, obs == 1), dtype="float64")
     M = np.nansum(np.logical_and(pred == 0, obs == 1), dtype="float64")

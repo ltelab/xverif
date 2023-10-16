@@ -16,7 +16,7 @@ Created on Fri Oct 13 12:24:32 2023.
 # --> Does not expect np.inf
 # --> Set np.inf,pairwise equal values, ... to np.nan (if asked)
 # --> NaN masking OUTSIDE the metric computation routine
-# --> NOT IMPLEMENTED operations: skipna=False !
+# --> Return NaN if some NaN NOT IMPLEMENTED yet !
 #     --> BUT output metrics can be masked afterwards
 
 # Computational aspects
@@ -24,6 +24,7 @@ Created on Fri Oct 13 12:24:32 2023.
 #   implementation="loop" might be faster.
 # - Verification considering multiple below/above thresholds
 #   - either requires calling the xverif.<function> multiple times.
+
 # TODO: either call XXXX to add thresholds dimension to Dataset before calling xverif !
 # --> Useful for continuous, probability data_type !
 # --> Similar for multiclass option: one vs. others !
@@ -40,12 +41,8 @@ Created on Fri Oct 13 12:24:32 2023.
 # pandas & xarray functions only provide the skipna argument
 
 ####--------------------------------------------------------------------------.
-#### Masking/Dropping/Skip options
-# skip_na
-# skip_inf
-# skip_equals
-
-#### masking_options
+#### Skip options (Masking & Dropping)
+#### skip_options
 # --> List
 # - nan: True
 # - inf: True

@@ -10,26 +10,23 @@ import scipy.stats
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from xverif import EPS
-from xverif.preprocessing import _drop_nans
+from xverif.dropping import DropData
 from xverif.utils.timing import print_elapsed_time
 
 
-def _get_metrics(pred, obs, skip_na=True, **kwargs):
+def _get_metrics(pred, obs, drop_options=None):
     """Deterministic metrics for continuous predictions forecasts.
 
     This function expects pred and obs to be 1D vector of same size
     """
-    # TODO robust with median and IQR / MAD
+    # Preprocess data 
     pred = pred.flatten()
     obs = obs.flatten()
-
-    ##------------------------------------------------------------------------.
-    # Preprocess data (remove NaN if asked)
-    if skip_na:
-        pred, obs, _ = _drop_nans(pred, obs)
-        # If not non-NaN data, return a vector of nan data
-        if len(pred) == 0:
-            return np.ones(27) * np.nan
+    pred, obs = DropData(pred, obs, drop_options=drop_options).apply()
+    
+    # If not non-NaN data, return a vector of nan data
+    if len(pred) == 0:
+        return np.ones(27) * np.nan
     ##------------------------------------------------------------------------.
     # - Error
     error = pred - obs

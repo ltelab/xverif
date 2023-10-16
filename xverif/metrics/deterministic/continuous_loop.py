@@ -11,46 +11,47 @@ import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from xverif import EPS
-from xverif.preprocessing import _drop_nans
 from xverif.utils.timing import print_elapsed_time
+from xverif.dropping import DropData
 
-
-def _get_metrics(pred, obs, skip_na=True, **kwargs):
+def _get_metrics(pred, obs, drop_options=None):
     """Deterministic metrics for continuous predictions forecasts.
 
-    This function expects pred and obs to be 1D vector of same size
+    This function expects pred and obs to be 1D vector of same size.
     """
-    # TODO robust with median and IQR / MAD
+    # Preprocess data 
     pred = pred.flatten()
     obs = obs.flatten()
-
-    ##------------------------------------------------------------------------.
-    # Preprocess data (remove NaN if asked)
-    if skip_na:
-        pred, obs, _ = _drop_nans(pred, obs)
-        # If not non-NaN data, return a vector of nan data
-        if len(pred) == 0:
-            return np.ones(27) * np.nan
+    pred, obs = DropData(pred, obs, drop_options=drop_options).apply()
+    
+    # If not non-NaN data, return a vector of nan data
+    if len(pred) == 0:
+        return np.ones(19) * np.nan
+    
     ##------------------------------------------------------------------------.
     # - Error
     error = pred - obs
     error_squared = error**2
     error_perc = error / (obs + EPS)
+    
     ##------------------------------------------------------------------------.
     # - Mean
     pred_mean = pred.mean()
     obs_mean = obs.mean()
     error_mean = error.mean()
+    
     ##------------------------------------------------------------------------.
     # - Standard deviation
     pred_std = pred.std()
     obs_std = obs.std()
     error_std = error.std()
+    
     ##------------------------------------------------------------------------.
     # - Coefficient of variability
     pred_CoV = pred_std / (pred_mean + EPS)
     obs_CoV = obs_std / (obs_mean + EPS)
     error_CoV = error_std / (error_mean + EPS)
+    
     ##------------------------------------------------------------------------.
     # - Magnitude metrics
     BIAS = error_mean
@@ -65,16 +66,20 @@ def _get_metrics(pred, obs, skip_na=True, **kwargs):
     relMAE = MAE / (obs_mean + EPS)
     relMSE = MSE / (obs_mean + EPS)
     relRMSE = RMSE / (obs_mean + EPS)
+    
     ##------------------------------------------------------------------------.
     # - Average metrics
     rMean = pred_mean / (obs_mean + EPS)
     diffMean = pred_mean - obs_mean
+    
     ##------------------------------------------------------------------------.
     # - Variability metrics
     rSD = pred_std / (obs_std + EPS)
     diffSD = pred_std - obs_std
     rCoV = pred_CoV / obs_CoV
     diffCoV = pred_CoV - obs_CoV
+    
+    ##------------------------------------------------------------------------.
     # - Correlation metrics
     # pearson_R, pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
     # pearson_R2 = pearson_R**2
@@ -173,15 +178,21 @@ def _xr_apply_routine(
     pred,
     obs,
     dims=("time"),
-    **kwargs,
+    metrics=None, 
+    compute=True,
+    drop_options=None,
 ):
-    """Compute deterministic continuous metrics."""
+    """Compute deterministic continuous metrics.
+    
+    With this implementation all metrics are computed and then subsetted.
+    """
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
 
-    # Check kwargs
-    # TODO
-
+    # Define kwargs
+    kwargs = {}
+    kwargs["drop_options"] = drop_options
+    
     # Define gufunc kwargs
     input_core_dims = [dims, dims]
     dask_gufunc_kwargs = {
@@ -191,7 +202,7 @@ def _xr_apply_routine(
     }
 
     # Apply ufunc
-    ds_skill = xr.apply_ufunc(
+    da_skill = xr.apply_ufunc(
         func,
         pred,
         obs,
@@ -205,11 +216,18 @@ def _xr_apply_routine(
     )
 
     # Compute the skills
-    with ProgressBar():
-        ds_skill = ds_skill.compute()
+    if compute:
+        with ProgressBar():
+            da_skill = da_skill.compute()
 
     # Add skill coordinates
-    ds_skill = ds_skill.assign_coords({"skill": skill_names})
-
+    da_skill = da_skill.assign_coords({"skill": skill_names})
+    
+    # Subset skill coordinates 
+    # TODO 
+    
+    # Convert to skill Dataset
+    ds_skill = da_skill.to_dataset(dim="skill")
+    
     # Return the skill Dataset
     return ds_skill

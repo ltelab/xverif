@@ -50,7 +50,7 @@ def _check_forecast_type(forecast_type: str) -> None:
 
 def _check_aggregating_dim(aggregating_dim, obs):
     """Check aggregating_dims format."""
-    if not isinstance(aggregating_dim, (type(None), list, tuple)):
+    if not isinstance(aggregating_dim, (type(None), str, list, tuple)):
         raise TypeError("'aggregatings_dims' must be a str, list, tuple or None.")
     if isinstance(aggregating_dim, str):
         aggregating_dim = [aggregating_dim]
@@ -72,7 +72,7 @@ def _check_metric_type(metric_type):
         raise ValueError(f"Valid 'metric_type' are {tp.get_args(ValidMetricType)}")
 
 
-def _get_xr_routine(metric_type, forecast_type, implementation="stacked"):
+def _get_xr_routine(metric_type, forecast_type, implementation="vectorized"):
     """Retrieve xarray routine to compute the metrics."""
     # Check inputs
     _check_forecast_type(forecast_type)
@@ -131,13 +131,9 @@ def deterministic(
     obs,
     forecast_type="continuous",
     aggregating_dim=None,
-    implementation="stacked",
+    implementation="vectorized",
     metrics=None,
     compute=True,
-    # TODO: to refactor name
-    skip_na=True,
-    skip_infs=True,
-    skip_zeros=True,
     skip_options=None,
 ):
     """Compute deterministic metrics."""
@@ -161,19 +157,26 @@ def deterministic(
     # Align Datasets
     pred, obs = align_xarray_objects(pred, obs)
 
-    # Apply masking for vectorized computation
+    # Apply masking for vectorized computations
     if implementation == "vectorized":
         # Broadcast obs to pred (for preprocessing)
         # - Creates a view, not a copy !
         obs = obs.broadcast_like(pred)
         # Mask datasets
         pred, obs = mask_datasets(pred, obs, masking_options=skip_options)
-
+    
     # Convert Dataset to DataArray
     # - Enable to vectorize also over variables if numpy
     pred = ensure_dataarray(pred)
     obs = ensure_dataarray(obs)
-
+        
+    # Define routine kwargs 
+    routine_kwargs = {}
+    if implementation == "loop": 
+        routine_kwargs["drop_options"] = skip_options
+    elif implementation == "vectorized": 
+        routine_kwargs["metrics"] = metrics
+        
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(
         metric_type="deterministic",
@@ -186,12 +189,10 @@ def deterministic(
         pred=pred,
         obs=obs,
         dims=aggregating_dim,
-        metrics=metrics,
         compute=compute,
-        skip_na=skip_na,
-        skip_infs=skip_infs,
-        skip_zeros=skip_zeros,
+        **routine_kwargs,
     )
+    
     return ds_skill
 
 

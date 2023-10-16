@@ -6,7 +6,7 @@ Created on Mon Jun 26 16:20:29 2023.
 @author: ghiggi
 """
 from xverif.datasets import create_ensemble_forecast_dataset, create_spatial2d_dataset
-from xverif.metrics.deterministic.continuous_stacked import (
+from xverif.metrics.deterministic.continuous_vectorized import (
     _get_metrics,
     get_available_metrics,
     get_metrics,
