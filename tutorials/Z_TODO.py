@@ -9,8 +9,6 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-# Test Dataset masking
-
 # Implement Numpy Dropping Class
 
 # Update implementation argument
@@ -23,6 +21,10 @@ Created on Fri Oct 13 12:26:23 2023.
 
 # Working loop and vectorized solutions
 # - Deterministic Continuous and Binary
+
+# Expand thresholds (category ...)
+
+# Categorize / Binning
 
 # Define better naming dimensions
 # - aggregating_dim --> None?

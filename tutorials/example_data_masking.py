@@ -9,16 +9,7 @@ import dask
 import dask.array
 import numpy as np
 import xarray as xr
-from xverif.masking import MaskingDataArrays, mask_datasets
-
-# pred, obs = MaskDataArrays(pred, obs).nan()
-# pred, obs = MaskDataArrays(pred, obs).inf()
-# pred, obs = MaskDataArrays(pred, obs).values()
-# pred, obs = MaskDataArrays(pred, obs).equal_values()
-# pred, obs = MaskDataArrays(pred, obs).above_threshold()
-# pred, obs = MaskDataArrays(pred, obs).below_threshold()
-
-# pred, obs = MaskDataArrays(pred, obs, masking_options).apply()
+from xverif.masking import MaskDataArrays, mask_datasets
 
 #### Example
 ### Numpy-based
@@ -37,6 +28,10 @@ obs_dask = dask.array.from_array(obs_np, chunks=chunk_size)
 pred = xr.DataArray(pred_dask, dims="dim", coords={"dim": range(pred_dask.shape[0])})
 obs = xr.DataArray(obs_dask, dims="dim", coords={"dim": range(obs_dask.shape[0])})
 
+# No masking
+masked_pred, masked_obs = MaskDataArrays(pred, obs).apply()
+
+# One-liner masking
 masking_options = [
     {"nan": True},
     {"inf": True, "conditioned_on": "any"},
@@ -45,16 +40,21 @@ masking_options = [
     {"below_threshold": 1.5, "conditioned_on": "both"},
     {"above_threshold": 3, "conditioned_on": "obs"},
 ]
+masked_pred, masked_obs = MaskDataArrays(
+    pred, obs, masking_options=masking_options
+).apply()
+masked_pred.compute()
+masked_obs.compute()
 
-masking = MaskingDataArrays(pred, obs, masking_options=masking_options)
-masked_pred, masked_obs = masking.apply()
+pred, obs = MaskDataArrays(pred, obs, masking_options={"nan": True}).apply()
 
-pred, obs = MaskingDataArrays(pred, obs, masking_options).apply()
-
-obs.compute()
-pred.compute()
-
-pred, obs = MaskingDataArrays(pred, obs, masking_options={"nan": True}).apply()
+# Step by step masking
+pred, obs = MaskDataArrays(pred, obs).nan()
+pred, obs = MaskDataArrays(pred, obs).inf()
+pred, obs = MaskDataArrays(pred, obs).values(values=0)
+pred, obs = MaskDataArrays(pred, obs).equal_values()
+pred, obs = MaskDataArrays(pred, obs).above_threshold(threshold=3)
+pred, obs = MaskDataArrays(pred, obs).below_threshold(threshold=3, conditioned_on="any")
 
 
 # Create Xarray Dataset
@@ -65,6 +65,7 @@ obs_data = xr.DataArray(obs_dask, dims="dim", coords={"dim": range(obs_dask.shap
 ds_pred = xr.Dataset({"var1": pred_data, "var2": pred_data})
 ds_obs = xr.Dataset({"var1": obs_data, "var2": obs_data})
 
+# Dataset masking
 masking_options = [
     {"nan": True},
     {"inf": True, "conditioned_on": "any"},

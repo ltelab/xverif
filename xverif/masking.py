@@ -138,7 +138,7 @@ def _get_masking_option_func_key(masking_option):
     return keys[0]
 
 
-class MaskingDataArrays:
+class MaskDataArrays:
     """MaskDataArray class."""
 
     def __init__(self, pred, obs, masking_options=None, masking_value=np.nan):
@@ -147,24 +147,20 @@ class MaskingDataArrays:
         # TODO: check masking_value same type of pred and obs
         self.pred = pred
         self.obs = obs
+        self.masked_pred = self.pred.copy()
+        self.masked_obs = self.obs.copy()
         self.masking_value = masking_value
         self.masking_options = masking_options
 
     def apply(self):
         """Apply the masking options."""
-        if len(self.masking_options) == 0:
-            return self.pred, self.obs
-
-        masked_pred = self.pred.copy()
-        masked_obs = self.obs.copy()
-
         func_dict = {
-            "nan": self.mask_nan,
-            "inf": self.mask_inf,
-            "equal_values": self.mask_equal_values,
-            "values": self.mask_values,
-            "above_threshold": self.mask_above_threshold,
-            "below_threshold": self.mask_below_threshold,
+            "nan": self.nan,
+            "inf": self.inf,
+            "equal_values": self.equal_values,
+            "values": self.values,
+            "above_threshold": self.above_threshold,
+            "below_threshold": self.below_threshold,
         }
 
         for masking_option in self.masking_options:
@@ -176,17 +172,22 @@ class MaskingDataArrays:
                 if not masking_option[func_key]:
                     continue  # do not execute masking if False
                 option_kwargs.pop(func_key, None)
-
+            if func_key == "above_threshold":
+                option_kwargs["threshold"] = option_kwargs.pop("above_threshold")
+            if func_key == "below_threshold":
+                option_kwargs["threshold"] = option_kwargs.pop("below_threshold")
             if "masking_value" not in option_kwargs:
                 option_kwargs["masking_value"] = self.masking_value
 
             # Apply masking
-            masked_pred, masked_obs = func(masked_pred, masked_obs, **option_kwargs)
+            self.masked_pred, self.masked_obs = func(**option_kwargs)
 
-        return masked_pred, masked_obs
+        return self.masked_pred, self.masked_obs
 
-    def mask_nan(self, pred, obs, conditioned_on, masking_value):
+    def nan(self, masking_value=np.nan, conditioned_on="any"):
         """Mask nan values."""
+        pred = self.masked_pred
+        obs = self.masked_obs
         condition_map = {
             "obs": lambda: np.isnan(obs),
             "pred": lambda: np.isnan(pred),
@@ -198,8 +199,10 @@ class MaskingDataArrays:
         obs = obs.where(~isnan, other=masking_value)
         return pred, obs
 
-    def mask_inf(self, pred, obs, conditioned_on, masking_value):
+    def inf(self, masking_value=np.nan, conditioned_on="any"):
         """Mask inf values."""
+        pred = self.masked_pred
+        obs = self.masked_obs
         condition_map = {
             "obs": lambda: np.isinf(obs),
             "pred": lambda: np.isinf(pred),
@@ -211,15 +214,19 @@ class MaskingDataArrays:
         obs = obs.where(~isinf, other=masking_value)
         return pred, obs
 
-    def mask_equal_values(self, pred, obs, masking_value, conditioned_on="dummy"):
+    def equal_values(self, masking_value=np.nan, conditioned_on="dummy"):
         """Mask the values which are equal in both DataArrays."""
+        pred = self.masked_pred
+        obs = self.masked_obs
         isequal = pred == obs
         pred = pred.where(~isequal, other=masking_value)
         obs = obs.where(~isequal, other=masking_value)
         return pred, obs
 
-    def mask_values(self, pred, obs, values, conditioned_on, masking_value):
+    def values(self, values, masking_value=np.nan, conditioned_on="both"):
         """Mask the specified values."""
+        pred = self.masked_pred
+        obs = self.masked_obs
         if isinstance(values, (int, float)):
             values = [values]
         condition_map = {
@@ -233,34 +240,30 @@ class MaskingDataArrays:
         obs = obs.where(~isvalues, other=masking_value)
         return pred, obs
 
-    def mask_above_threshold(
-        self, pred, obs, above_threshold, conditioned_on, masking_value
-    ):
+    def above_threshold(self, threshold, masking_value=np.nan, conditioned_on="both"):
         """Mask values above the specified threshold."""
+        pred = self.masked_pred
+        obs = self.masked_obs
         condition_map = {
-            "obs": lambda: obs > above_threshold,
-            "pred": lambda: pred > above_threshold,
-            "any": lambda: np.logical_or(obs > above_threshold, pred > above_threshold),
-            "both": lambda: np.logical_and(
-                obs > above_threshold, pred > above_threshold
-            ),
+            "obs": lambda: obs > threshold,
+            "pred": lambda: pred > threshold,
+            "any": lambda: np.logical_or(obs > threshold, pred > threshold),
+            "both": lambda: np.logical_and(obs > threshold, pred > threshold),
         }
         isabove = condition_map[conditioned_on]()
         pred = pred.where(~isabove, other=masking_value)
         obs = obs.where(~isabove, other=masking_value)
         return pred, obs
 
-    def mask_below_threshold(
-        self, pred, obs, below_threshold, conditioned_on, masking_value
-    ):
+    def below_threshold(self, threshold, masking_value=np.nan, conditioned_on="both"):
         """Mask values below the specified threshold."""
+        pred = self.masked_pred
+        obs = self.masked_obs
         condition_map = {
-            "obs": lambda: obs < below_threshold,
-            "pred": lambda: pred < below_threshold,
-            "any": lambda: np.logical_or(obs < below_threshold, pred < below_threshold),
-            "both": lambda: np.logical_and(
-                obs < below_threshold, pred < below_threshold
-            ),
+            "obs": lambda: obs < threshold,
+            "pred": lambda: pred < threshold,
+            "any": lambda: np.logical_or(obs < threshold, pred < threshold),
+            "both": lambda: np.logical_and(obs < threshold, pred < threshold),
         }
         isbelow = condition_map[conditioned_on]()
         pred = pred.where(~isbelow, other=masking_value)
@@ -274,7 +277,7 @@ class MaskingDataArrays:
 
 def mask_dataarrays(pred, obs, masking_options):
     """Mask a DataArray based on the given masking options."""
-    pred, obs = MaskingDataArrays(pred, obs, masking_options=masking_options).apply()
+    pred, obs = MaskDataArrays(pred, obs, masking_options=masking_options).apply()
     return pred, obs
 
 

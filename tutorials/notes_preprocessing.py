@@ -58,7 +58,6 @@ Created on Fri Oct 13 12:24:32 2023.
 # Conditioning option
 # - conditioned_on: 'both', 'any', 'pred', 'obs',
 
-
 # Possible cases:
 # - Various options and conditions
 #   --> Mask values=[0] conditioned_on 'both',
