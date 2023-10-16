@@ -12,7 +12,7 @@ Created on Fri Oct 13 12:22:02 2023.
 ####--------------------------------------------------------------------------.
 #### Data, Metric, Support Type
 # data_type: binary, multiclass, ordered, probability, continuous
-# metric_type: deterministic, probabilistic (spatial, temporal)
+# metric_type: deterministic, probabilistic
 # support_type: point, spatial, temporal
 
 ####--------------------------------------------------------------------------.
@@ -108,6 +108,12 @@ ds_skills = xverif.deterministic(
 # --> Spatial metrics:
 #  - applied to entire input spatial image
 #  - applied on sliding window
+
+# Temporal metrics
+# - Require time index
+# - Time scale of interest ?
+# - Daily/Weekly/Monthly/Seasonal/Annual ...
+
 
 # TODO Distribution metrics
 # --> in which <XXXX_type>?

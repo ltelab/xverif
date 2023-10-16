@@ -49,7 +49,7 @@ skip_options = [
     {"inf": True, "conditioned_on": "any"},
     # {"equal_values": False},
     {"values": 0, "conditioned_on": "both"},
-    {"below_threshold": 1.5, "conditioned_on": "both"},
+    # {"below_threshold": 1.5, "conditioned_on": "both"},
     # {"above_threshold": 3, "conditioned_on": "obs"},
 ]
 
@@ -63,7 +63,7 @@ ds_skills = xverif.deterministic(
 )
 
 
-ds_skills = xverif.deterministic(
+ds_skills1 = xverif.deterministic(
     pred=pred,
     obs=obs,
     data_type="continuous",
@@ -71,6 +71,13 @@ ds_skills = xverif.deterministic(
     implementation="vectorized",
     skip_options=skip_options,
 )
+
+
+for var in ds_skills.data_vars:
+    xr.testing.assert_allclose(ds_skills[var], ds_skills1[var])
+    # xr.testing.assert_equal(ds_skills[var], ds_skills1[var])
+    # ds_skills[var] - ds_skills1[var]
+
 
 # Convert Dataset skills to Dataset Variable
 ds_skills.to_array(dim="skill").to_dataset(dim="variable")

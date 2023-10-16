@@ -9,10 +9,9 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-# Return same skills between loop and vectorized
+# Create nanquantile dask function using mapblock !
 
-# Working loop and vectorized solutions
-# - Deterministic Continuous and Binary
+# Implement binary data_type
 
 # Expand thresholds (category ...) --> Add new dimension
 

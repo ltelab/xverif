@@ -9,18 +9,22 @@ import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
 from xverif import EPS
-from xverif.metrics.deterministic.correlations import (
-    __pearson_corr_coeff,
-    _spearman_corr_coeff,
+from xverif.metrics.deterministic.correlations_vectorized import (
+    _pearson_r,
+    spearman_r,
 )
 from xverif.utils.timing import print_elapsed_time
 from xverif.utils.warnings import suppress_warnings
 
 
 def get_aux_dims(pred, sample_dims):
-    """Infer aux_dims from prediction dataset."""
+    """Infer aux_dims from prediction dataset.
+
+    Keep order of the dataset dimensions!
+    """
     dims = list(pred.dims)
-    aux_dims = set(dims).difference(sample_dims)
+    aux_dims = [dim for dim in dims if dim not in sample_dims]
+    # aux_dims = set(dims).difference(sample_dims)
     return aux_dims
 
 
@@ -28,13 +32,13 @@ def get_stacking_dict(pred, sample_dims):
     """Get stacking dimension dictionary."""
     aux_dims = get_aux_dims(pred, sample_dims)
     stacking_dict = {
-        "aux": aux_dims,
-        "sample": sample_dims,
+        "stacked_dim": aux_dims,
+        "sample_dim": sample_dims,
     }
     return stacking_dict
 
 
-def _mIOA(error, pred, obs_anomaly, obs_Mean, j=1):
+def _mIOA(error, pred, obs_anomaly, obs_Mean, j=1, axis=1):
     """Return the modified Index of Agreement.
 
     See Wilmott et al., 1981.
@@ -42,9 +46,11 @@ def _mIOA(error, pred, obs_anomaly, obs_Mean, j=1):
     # TOREAD
     # https://search.r-project.org/CRAN/refmans/hydroGOF/html/md.html
     # https://www.nature.com/articles/srep19401 --> IoA_Gallo
-    pred_anomaly = pred - np.expand_dims(obs_Mean, axis=1)
-    denominator = np.nansum(((np.abs(obs_anomaly) + np.abs(pred_anomaly)) ** j), axis=1)
-    mIoA = 1 - np.nansum(error**j, axis=1) / (denominator + EPS)
+    pred_anomaly = pred - np.expand_dims(obs_Mean, axis=axis)
+    denominator = np.nansum(
+        ((np.abs(obs_anomaly) + np.abs(pred_anomaly)) ** j), axis=axis
+    )
+    mIoA = 1 - np.nansum(error**j, axis=axis) / (denominator + EPS)
     return mIoA
 
 
@@ -99,8 +105,11 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     skills : dict
         A dictionary of format <metric>: <value>.
     """
+    # Define axis
+    axis = 1
+
     # Number of valid samples
-    N = np.logical_and(np.isfinite(pred), np.isfinite(obs)).sum(axis=1)
+    N = np.logical_and(np.isfinite(pred), np.isfinite(obs)).sum(axis=axis)
 
     ##------------------------------------------------------------------------.
     # - Error
@@ -112,36 +121,31 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
 
     ##------------------------------------------------------------------------.
     # Sum of errors
-    SE = np.nansum(error, axis=1)
-    SAE = np.nansum(error_abs, axis=1)
-    SSE = np.nansum(error_squared, axis=1)
+    SE = np.nansum(error, axis=axis)
+    SAE = np.nansum(error_abs, axis=axis)
+    SSE = np.nansum(error_squared, axis=axis)
 
     ##------------------------------------------------------------------------.
     # - Mean
-    pred_Mean = np.nanmean(pred, axis=1)
-    obs_Mean = np.nanmean(obs, axis=1)
-    error_Mean = np.nanmean(error, axis=1)
+    pred_Mean = np.nanmean(pred, axis=axis)
+    obs_Mean = np.nanmean(obs, axis=axis)
+    error_Mean = np.nanmean(error, axis=axis)
 
-    obs_anomaly = obs - np.expand_dims(obs_Mean, axis=1)
+    obs_anomaly = obs - np.expand_dims(obs_Mean, axis=axis)
 
     ##------------------------------------------------------------------------.
     # - Standard deviation
-    pred_SD = np.nanstd(pred, axis=1)
-    obs_SD = np.nanstd(obs, axis=1)
-    error_SD = np.nanstd(error, axis=1)
+    pred_SD = np.nanstd(pred, axis=axis)
+    obs_SD = np.nanstd(obs, axis=axis)
+    error_SD = np.nanstd(error, axis=axis)
+
     ##------------------------------------------------------------------------.
-    # Spread
+    # TODO: Scatter
     # - Scatter
     # --> Half the distance between the 16% and 84% percentiles with error dB(pred/obs)
-
-    # TODO: check
     # error_db = 10 * np.log10(pred / (obs + EPS))
-    # q16, q84 = np.nanquantiles(error_db, q=[0.16, 0.25, 0.75, 0.84], axis=1)
+    # q16, q25, q50, q75, q84 = np.nanquantile(error_db, q=[0.16, 0.25, 0.5, 0.75, 0.84], axis=axis)
     # SCATTER = (q84 - q16) / 2.0
-
-    # # - IQR
-    # q25, q75 = np.nanquantiles(error, q=[0.25, 0.75], axis=1)
-    # IQR = q75 - q25
 
     ##------------------------------------------------------------------------.
     # - Coefficient of variability
@@ -152,15 +156,15 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     ##------------------------------------------------------------------------.
     # - Magnitude metrics
     BIAS = error_Mean
-    MAE = np.nanmean(error_abs, axis=1)
-    MSE = np.nanmean(error_squared, axis=1)
+    MAE = np.nanmean(error_abs, axis=axis)
+    MSE = np.nanmean(error_squared, axis=axis)
     RMSE = np.sqrt(MSE)
 
-    MaxAbsError = np.nanmax(error_abs, axis=1)
+    MaxAbsError = np.nanmax(error_abs, axis=axis)
 
-    percBIAS = np.nanmean(error_perc, axis=1) * 100
-    percMAE = np.nanmean(np.abs(error_perc), axis=1) * 100  # MAPE
-    MAPE = np.nanmean(error_abs_perc, axis=1) * 100
+    percBIAS = np.nanmean(error_perc, axis=axis) * 100
+    percMAE = np.nanmean(np.abs(error_perc), axis=axis) * 100  # MAPE
+    MAPE = np.nanmean(error_abs_perc, axis=axis) * 100
 
     relBIAS = BIAS / (obs_Mean + EPS)
     relMAE = MAE / (obs_Mean + EPS)
@@ -183,12 +187,13 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     # - Variance accounted for (VAF)
     EVS = 1 - error_SD**2 / obs_SD**2
 
+    ##------------------------------------------------------------------------.
     # - Correlation metrics
-    pearson_R = __pearson_corr_coeff(
+    pearson_R = _pearson_r(
         x=pred, y=obs, mean_x=pred_Mean, mean_y=obs_Mean, std_x=pred_SD, std_y=obs_SD
     )
     pearson_R2 = pearson_R**2
-    spearman_R = _spearman_corr_coeff(x=pred, y=obs)
+    spearman_R = spearman_r(x=pred, y=obs)
     spearman_R2 = spearman_R**2
 
     # pearson_R_pvalue = scipy.stats.pearsonr(pred, obs)
@@ -198,30 +203,48 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     # - Overall skill metrics
     # - Nash Sutcliffe efficiency / Reduction of variance
     # - --> 1 - MSE/Var(obs)
-    denominator = np.nansum(obs_anomaly**2, axis=1)
+    denominator = np.nansum(obs_anomaly**2, axis=axis)
     NSE = 1 - (SSE / (denominator + EPS))
 
     # - Klinga Gupta Efficiency Score
     KGE = 1 - (np.sqrt((pearson_R - 1) ** 2 + (rSD - 1) ** 2 + (rMean - 1) ** 2))
 
     # - Modified Index of Agreement (Wilmott et al., 1981)
-    mIoA1 = _mIOA(error, pred, obs_anomaly, obs_Mean, j=1)
-    mIoA2 = _mIOA(error, pred, obs_anomaly, obs_Mean, j=2)
-    mIoA3 = _mIOA(error, pred, obs_anomaly, obs_Mean, j=3)
+    mIoA1 = _mIOA(error, pred, obs_anomaly, obs_Mean, j=1, axis=axis)
+    mIoA2 = _mIOA(error, pred, obs_anomaly, obs_Mean, j=2, axis=axis)
+    mIoA3 = _mIOA(error, pred, obs_anomaly, obs_Mean, j=3, axis=axis)
 
     ##------------------------------------------------------------------------.
     # - Median
-    pred_Median = np.nanmedian(pred, axis=1)
-    obs_Median = np.nanmedian(obs, axis=1)
-    error_Median = np.nanmedian(error, axis=1)
+    obs_q25, obs_Median, obs_q75 = np.nanquantile(obs, q=[0.25, 0.50, 0.75], axis=axis)
+    pred_q25, pred_Median, pred_q75 = np.nanquantile(
+        pred, q=[0.25, 0.50, 0.75], axis=axis
+    )
+    error_q25, error_Median, error_q75 = np.nanquantile(
+        error, q=[0.25, 0.50, 0.75], axis=axis
+    )
+
+    # pred_Median = np.nanmedian(pred, axis=axis)
+    # obs_Median = np.nanmedian(obs, axis=axis)
+    # error_Median = np.nanmedian(error, axis=axis)
 
     ##------------------------------------------------------------------------.
     # - Mean Absolute Deviation
-    pred_MAD = np.nanmedian(np.abs(pred - np.expand_dims(pred_Median, axis=1)), axis=1)
-    obs_MAD = np.nanmedian(np.abs(obs - np.expand_dims(obs_Median, axis=1)), axis=1)
-    error_MAD = np.nanmedian(
-        np.abs(error - np.expand_dims(error_Median, axis=1)), axis=1
+    pred_MAD = np.nanmedian(
+        np.abs(pred - np.expand_dims(pred_Median, axis=axis)), axis=axis
     )
+    obs_MAD = np.nanmedian(
+        np.abs(obs - np.expand_dims(obs_Median, axis=axis)), axis=axis
+    )
+    error_MAD = np.nanmedian(
+        np.abs(error - np.expand_dims(error_Median, axis=axis)), axis=axis
+    )
+
+    ##------------------------------------------------------------------------.
+    # - Interquartile range
+    pred_IQR = pred_q75 - pred_q25
+    obs_IQR = obs_q75 - obs_q25
+    error_IQR = error_q75 - error_q25
 
     ##------------------------------------------------------------------------.
     # - Robust Coefficient of variability
@@ -232,12 +255,12 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     ##------------------------------------------------------------------------.
     # - Robust Magnitude metrics
     rob_BIAS = error_Median
-    rob_MAE = np.nanmedian(error_abs, axis=1)
-    rob_MSE = np.nanmedian(error_squared, axis=1)
+    rob_MAE = np.nanmedian(error_abs, axis=axis)
+    rob_MSE = np.nanmedian(error_squared, axis=axis)
     rob_RMSE = np.sqrt(rob_MSE)
 
-    rob_percBIAS = np.nanmedian(error_perc, axis=1) * 100
-    rob_percMAE = np.nanmedian(np.abs(error_perc), axis=1) * 100
+    rob_percBIAS = np.nanmedian(error_perc, axis=axis) * 100
+    rob_percMAE = np.nanmedian(np.abs(error_perc), axis=axis) * 100
 
     rob_relBIAS = rob_BIAS / (obs_Median + EPS)
     rob_relMAE = rob_MAE / (obs_Median + EPS)
@@ -288,6 +311,9 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
         "obs_MAD": obs_MAD,
         "pred_MAD": pred_MAD,
         "error_MAD": error_MAD,
+        "obs_IQR": obs_IQR,
+        "pred_IQR": pred_IQR,
+        "error_IQR": error_IQR,
         "diffMAD": diffMAD,
         "rMAD": rMAD,
         "rob_obs_CoV": rob_obs_CoV,
@@ -408,7 +434,7 @@ def _xr_apply_routine(
     # - Based on kwargs
 
     # Define gufunc kwargs
-    input_core_dims = [["sample"], ["sample"]]
+    input_core_dims = [["sample_dim"], ["sample_dim"]]
     dask_gufunc_kwargs = {
         "output_sizes": {
             "skill": len(metrics),
@@ -437,8 +463,8 @@ def _xr_apply_routine(
     # Add skill coordinates
     da_skill = da_skill.assign_coords({"skill": metrics})
 
-    # Unstack
-    da_skill = da_skill.unstack("aux")
+    # Unstack auxiliary dimensions
+    da_skill = da_skill.unstack("stacked_dim")
 
     # Convert to skill Dataset
     ds_skill = da_skill.to_dataset(dim="skill")

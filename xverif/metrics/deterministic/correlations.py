@@ -1,190 +1,108 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 15 09:59:26 2023.
+Created on Mon Oct 16 21:53:04 2023.
 
 @author: ghiggi
 """
-import dask.array
 import numpy as np
-import xarray as xr
 
-#### rankdata
-# try:
-#     from bottleneck import nanrankdata as rankdata
-# except ImportError:
-#     from scipy.stats import rankdata
-
-### Ranks benchmarks
-# import bottleneck
-# import scipy.stats
-# arr = np.arange(0, 100_000_000).reshape(10_000,10_000)
-
-# %timeit arr.argsort(axis=1).argsort(axis=1) + 1
-# %timeit rankdata(arr, axis=1)
-# %timeit bottleneck.rankdata(arr, axis=1)
-# %timeit scipy.stats.rankdata(arr, axis=1)
-
-# x = np.array([np.nan, np.nan, 5, 4])
-# x.argsort().argsort() + 1
-# rankdata(x)
-# bottleneck.rankdata(x)
-# bottleneck.nanrankdata(x)
-# scipy.stats.rankdata(x)
-
-####---------------------------------------------------------------------------.
-#### pvalues
-# - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L319
-# - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L374
-# - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L460
-# - https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/np_deterministic.py#L503
+#### TODO: Add option to deal with nan?
 
 
-####---------------------------------------------------------------------------.
-
-
-def _np_rankdata(x: np.ndarray, axis: int = -1, out_dtype="int32"):
+def np_rankdata(x: np.array, out_dtype="int32"):
     """Rank data using numpy.
 
     Avoids using argsort 2 times.
     """
-    in_shape = x.shape
-    tmp = np.argsort(x, axis=axis).reshape(-1, in_shape[axis])
+    N = len(x)
+    tmp = np.argsort(x)
     rank = np.empty_like(tmp, dtype=out_dtype)
-    np.put_along_axis(rank, tmp, np.arange(1, in_shape[axis] + 1), axis=axis)
+    np.put_along_axis(rank, tmp, np.arange(1, N + 1), axis=0)
     del tmp
-    rank = rank.reshape(in_shape)
     return rank
 
 
-def _da_rankdata(x: dask.array.Array, axis: int = -1, out_dtype="int32"):
-    """Rank data using dask.
-
-    Avoids using argsort 2 times.
-    Wraps around _np_rankdata using dask.array.map_blocks
+def _pearson_r(x, y, mean_x, mean_y, std_x, std_y):
     """
-    rank_dask = dask.array.map_blocks(
-        _np_rankdata,
-        x,
-        dtype=out_dtype,
-        # _np_rankdata kwargs
-        axis=axis,
-        out_dtype=out_dtype,
-    )
-    return rank_dask
-
-
-def rankdata(x: np.ndarray, axis: int = -1, out_dtype="int32"):
-    """Rank data.
-
-    Avoids using argsort 2 times.
-    """
-    if isinstance(x, np.ndarray):
-        rank = _np_rankdata(x, axis=axis)
-    elif isinstance(x, dask.array.Array):
-        rank = _da_rankdata(x, axis=axis)
-    elif isinstance(x, xr.DataArray):
-        rank = x.copy()
-        rank.data = rankdata(x.data, axis=axis)
-    else:
-        raise NotImplementedError()
-    return rank
-
-
-def __pearson_corr_coeff(x, y, mean_x, mean_y, std_x, std_y):
-    """
-    Compute the Pearson Correlation Coefficient between pairwise columns.
-
-    To be used on x and y 2D arrays with samples across the columns,
-    and variables across the rows.
+    Compute the Pearson Correlation Coefficient between two 1D arrays.
 
     Parameters
     ----------
-    x : np.ndarray
-        2D array with shape (aux, sample)
-    y : np.ndarray
-        2D array with shape (aux, sample)
-    mean_x : np.ndarray
-        Mean 2D array with shape (aux,)
-    mean_y : np.ndarray
-        Mean 2D array with shape (aux,)
-    std_x : np.ndarray
-        Standard deviation 2D array with shape (aux,)
-    std_y : np.ndarray
-        Standard deviation 2D array with shape (aux,)
+    x : np.array
+        1D array
+    y : np.darray
+        1D array
+    mean_x : float
+        Mean value of x
+    mean_y : float
+        Mean value of y
+    std_x : float
+        Standard deviation of x
+    std_y : float
+        Standard deviation of y
 
     Returns
     -------
-    corr : np.ndarray
-        Correlation coefficient with shape (aux,)
+    corr : float
+        Correlation coefficient
 
     """
-    mean_x = np.expand_dims(mean_x, axis=1)
-    mean_y = np.expand_dims(mean_y, axis=1)
-
     # Compute the covariance between x and y
-    cov = np.nanmean((x - mean_x) * (y - mean_y), axis=1)
+    cov = np.mean((x - mean_x) * (y - mean_y))
 
     # Compute the correlation coefficient
     corr = cov / (std_x * std_y)
 
     # Clip to avoid numerical artefacts
     corr = np.clip(corr, -1.0, 1.0).astype("float64")
-
     return corr
 
 
-def _pearson_corr_coeff(x, y):
+def pearson_r(x, y):
     """
-    Compute the Pearson Correlation Coefficient between pairwise columns.
-
-    To be used on x and y 2D arrays with samples across the columns,
-    and variables across the rows.
+    Compute the Pearson Correlation Coefficient between two 1D arrays.
 
     Parameters
     ----------
-    x : np.ndarray
-        2D array with shape (aux, sample)
-    y : np.ndarray
-        2D array with shape (aux, sample)
+    x : np.array
+        1D array
+    y : np.darray
+        1D array
 
     Returns
     -------
-    corr : np.ndarray
-        Correlation coefficient with shape (aux,)
+    corr : float
+        Pearson correlation coefficient
 
     """
-    corr = __pearson_corr_coeff(
+    corr = _pearson_r(
         x=x,
         y=y,
-        mean_x=np.nanmean(x, axis=1),
-        mean_y=np.nanmean(y, axis=1),
-        std_x=np.nanstd(x, axis=1),
-        std_y=np.nanstd(y, axis=1),
+        mean_x=np.mean(x),
+        mean_y=np.mean(y),
+        std_x=np.std(x),
+        std_y=np.std(y),
     )
     return corr
 
 
-def _spearman_corr_coeff(x, y):
+def spearman_r(x, y):
     """
-    Compute the Spearman Correlation Coefficient between pairwise columns.
-
-    To be used on x and y 2D arrays with samples across the columns,
-    and variables across the rows.
+    Compute the Spearman Correlation Coefficient between two 1D arrays.
 
     Parameters
     ----------
-    x : np.ndarray
-        2D array with shape (aux, sample)
-    y : np.ndarray
-        2D array with shape (aux, sample)
+    x : np.array
+        1D array
+    y : np.darray
+        1D array
 
     Returns
     -------
-    corr : np.ndarray
-        Correlation coefficient with shape (aux,)
+    corr : float
+        Spearmann correlation coefficient
 
     """
-    # TODO: implement np.nan_rankdata (now is wrong)
-    corr = _pearson_corr_coeff(x=rankdata(x, axis=1), y=rankdata(y, axis=1))
+    corr = pearson_r(x=np_rankdata(x), y=np_rankdata(y))
     return corr
