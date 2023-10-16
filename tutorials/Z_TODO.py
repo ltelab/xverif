@@ -9,15 +9,6 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-# Define better naming dimensions
-# sample_dims --> sample_dims
-# - sample_dims --> None?
-# - Change name of sample_dims
-# - Change name of sample and aux dimensions
-
-# Rename forecast_type --> data_type
-
-
 # Return same skills between loop and vectorized
 
 # Working loop and vectorized solutions

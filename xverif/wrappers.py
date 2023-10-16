@@ -41,10 +41,10 @@ def _check_shared_dims(dims, pred, obs):
         )
 
 
-def _check_forecast_type(forecast_type: str) -> None:
-    if forecast_type not in (valid := tp.get_args(ValidForecastType)):
+def _check_data_type(data_type: str) -> None:
+    if data_type not in (valid := tp.get_args(ValidForecastType)):
         raise ValueError(
-            f"{forecast_type} is not a valid forecast type. Must be one of {valid}."
+            f"{data_type} is not a valid data type. Must be one of {valid}."
         )
 
 
@@ -72,14 +72,14 @@ def _check_metric_type(metric_type):
         raise ValueError(f"Valid 'metric_type' are {tp.get_args(ValidMetricType)}")
 
 
-def _get_xr_routine(metric_type, forecast_type, implementation="vectorized"):
+def _get_xr_routine(metric_type, data_type, implementation="vectorized"):
     """Retrieve xarray routine to compute the metrics."""
     # Check inputs
-    _check_forecast_type(forecast_type)
+    _check_data_type(data_type)
     _check_metric_type(metric_type)
     # Define module path
-    # TODO: module_path = f"xverif.metrics.{metric_type}.{forecast_type}
-    module_path = f"xverif.metrics.{metric_type}.{forecast_type}_{implementation}"
+    # TODO: module_path = f"xverif.metrics.{metric_type}.{data_type}
+    module_path = f"xverif.metrics.{metric_type}.{data_type}_{implementation}"
     # Import the module
     module = import_module(module_path)
     # Import the function
@@ -129,7 +129,7 @@ def align_xarray_objects(pred, obs):
 def deterministic(
     pred,
     obs,
-    forecast_type="continuous",
+    data_type="continuous",
     sample_dims=None,
     implementation="vectorized",
     metrics=None,
@@ -141,7 +141,7 @@ def deterministic(
 
     sample_dims = _check_sample_dims(sample_dims, obs)
     _check_shared_dims(sample_dims, pred, obs)
-    _check_forecast_type(forecast_type)
+    _check_data_type(data_type)
 
     # Define default skip_options options
     # TODO: - Set default based on data_type, ...
@@ -180,7 +180,7 @@ def deterministic(
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(
         metric_type="deterministic",
-        forecast_type=forecast_type,
+        data_type=data_type,
         implementation=implementation,
     )
 
