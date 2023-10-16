@@ -17,19 +17,19 @@ from xverif.utils.timing import print_elapsed_time
 from xverif.utils.warnings import suppress_warnings
 
 
-def get_aux_dims(pred, aggregating_dim):
+def get_aux_dims(pred, sample_dims):
     """Infer aux_dims from prediction dataset."""
     dims = list(pred.dims)
-    aux_dims = set(dims).difference(aggregating_dim)
+    aux_dims = set(dims).difference(sample_dims)
     return aux_dims
 
 
-def get_stacking_dict(pred, aggregating_dim):
+def get_stacking_dict(pred, sample_dims):
     """Get stacking dimension dictionary."""
-    aux_dims = get_aux_dims(pred, aggregating_dim)
+    aux_dims = get_aux_dims(pred, sample_dims)
     stacking_dict = {
         "aux": aux_dims,
-        "sample": aggregating_dim,
+        "sample": sample_dims,
     }
     return stacking_dict
 
@@ -369,7 +369,7 @@ def get_metrics(
 def _xr_apply_routine(
     pred,
     obs,
-    dims=("time"),
+    sample_dims,
     metrics=None,
     compute=True,
     **kwargs,
@@ -400,7 +400,7 @@ def _xr_apply_routine(
 
     # Stack pred and obs to have 2D dimensions (aux, sample)
     # - This operation doubles the memory
-    stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)
+    stacking_dict = get_stacking_dict(pred, sample_dims=sample_dims)
     pred = pred.stack(stacking_dict)
     obs = obs.stack(stacking_dict)
 

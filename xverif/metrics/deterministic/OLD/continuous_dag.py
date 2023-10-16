@@ -94,7 +94,7 @@ def _get_metrics_lazy(
 def _get_metrics(
     pred,
     obs,
-    dims=("time"),
+    sample_dims,
     metrics=None,
     compute=True,
     **kwargs,
@@ -103,7 +103,7 @@ def _get_metrics(
 
     dims must be a tuple, unique values
     """
-    metrics_ds = _get_metrics_lazy(pred, obs, dims)
+    metrics_ds = _get_metrics_lazy(pred, obs, sample_dims)
     metrics_ds = metrics_ds[metrics] if metrics else metrics_ds
     metrics_ds = metrics_ds.compute() if compute else metrics_ds
 

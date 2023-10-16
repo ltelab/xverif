@@ -24,7 +24,7 @@ def _xr_inner_product(x, y, dim, dask="parallelized"):
         if isinstance(dim, tuple):
             dim = list()
         if len(dim) == 2:
-            # TODO reshape data to aggregate_dims x 'time'
+            # TODO reshape data to sample_dim x 'time'
             raise NotImplementedError
         input_core_dims = [dim, dim]  # [[x_dim, y_dim]
     else:
@@ -39,19 +39,17 @@ def _xr_inner_product(x, y, dim, dask="parallelized"):
     )
 
 
-def _xr_covariance(x, y, aggregating_dims=None, dask="parallelized"):
-    x_mean = x.mean(aggregating_dims)
-    y_mean = y.mean(aggregating_dims)
-    N = x.count(aggregating_dims)
-    return (
-        _xr_inner_product(x - x_mean, y - y_mean, dim=aggregating_dims, dask=dask) / N
-    )
+def _xr_covariance(x, y, sample_dims=None, dask="parallelized"):
+    x_mean = x.mean(sample_dims)
+    y_mean = y.mean(sample_dims)
+    N = x.count(sample_dims)
+    return _xr_inner_product(x - x_mean, y - y_mean, dim=sample_dims, dask=dask) / N
 
 
-def _xr_pearson_correlation(x, y, aggregating_dims=None, dask="parallelized"):
-    x_std = x.std(aggregating_dims) + EPS
-    y_std = y.std(aggregating_dims) + EPS
-    return _xr_covariance(x, y, aggregating_dims=aggregating_dims, dask=dask) / (
+def _xr_pearson_correlation(x, y, sample_dims=None, dask="parallelized"):
+    x_std = x.std(sample_dims) + EPS
+    y_std = y.std(sample_dims) + EPS
+    return _xr_covariance(x, y, aggregating_sample_dims=sample_dims, dask=dask) / (
         x_std * y_std
     )
 
@@ -63,7 +61,7 @@ def _xr_pearson_correlation(x, y, aggregating_dims=None, dask="parallelized"):
 #                           dask="parallelized")
 
 
-# def _xr_spearman_correlation(x, y, aggregating_dims=None):
-#     x_rank= x.rank(dim=aggregating_dims)
-#     y_rank = y.rank(dim=aggregating_dims)
-#     return _xr_pearson_correlation(x_rank,y_rank, aggregating_dims=aggregating_dims)
+# def _xr_spearman_correlation(x, y, sample_dims=None):
+#     x_rank= x.rank(dim=sample_dims)
+#     y_rank = y.rank(dim=sample_dims)
+#     return _xr_pearson_correlation(x_rank,y_rank, aggregating_sample_dims=sample_dims)

@@ -31,7 +31,7 @@ if __name__ == "__main__":
     ##----------------------------------------------------------------------------.
     # Compute deterministic metric (at each node, each leadtime)
     ds_skill = xverif.deterministic(
-        pred, obs, forecast_type="continuous", aggregating_dim="time"
+        pred, obs, forecast_type="continuous", sample_dims="time"
     )
 
     # Add information related to mesh area

@@ -9,13 +9,13 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-
-# Remove dims=("time")
-# Rename forecast_type --> data_type
 # Define better naming dimensions
-# - aggregating_dim --> None?
-# - Change name of aggregating_dim
+# sample_dims --> sample_dims
+# - sample_dims --> None?
+# - Change name of sample_dims
 # - Change name of sample and aux dimensions
+
+# Rename forecast_type --> data_type
 
 
 # Return same skills between loop and vectorized
@@ -25,8 +25,11 @@ Created on Fri Oct 13 12:26:23 2023.
 
 # Expand thresholds (category ...) --> Add new dimension
 
-# Categorize / Binning
+# Categorize / Binning (xcategorize, xbinning)¨
 
+# Support dimensions
+# --> Should also be included in sample_dims ?
+# --> Spatial metrics (stacked_dims, x, y, sample_dims)
 
 ####--------------------------------------------------------------------------.
 #### Daskify functions

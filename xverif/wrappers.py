@@ -48,20 +48,20 @@ def _check_forecast_type(forecast_type: str) -> None:
         )
 
 
-def _check_aggregating_dim(aggregating_dim, obs):
-    """Check aggregating_dims format."""
-    if not isinstance(aggregating_dim, (type(None), str, list, tuple)):
+def _check_sample_dims(sample_dims, obs):
+    """Check sample_dims format."""
+    if not isinstance(sample_dims, (type(None), str, list, tuple)):
         raise TypeError("'aggregatings_dims' must be a str, list, tuple or None.")
-    if isinstance(aggregating_dim, str):
-        aggregating_dim = [aggregating_dim]
+    if isinstance(sample_dims, str):
+        sample_dims = [sample_dims]
     else:
         # Set defaults if None or empty list/tuple
         dims = list(obs.dims)
-        if isinstance(aggregating_dim, type(None)):
-            aggregating_dim = dims
-        if len(aggregating_dim) == 0:
-            aggregating_dim = dims
-    return aggregating_dim
+        if isinstance(sample_dims, type(None)):
+            sample_dims = dims
+        if len(sample_dims) == 0:
+            sample_dims = dims
+    return sample_dims
 
 
 def _check_metric_type(metric_type):
@@ -130,7 +130,7 @@ def deterministic(
     pred,
     obs,
     forecast_type="continuous",
-    aggregating_dim=None,
+    sample_dims=None,
     implementation="vectorized",
     metrics=None,
     compute=True,
@@ -139,8 +139,8 @@ def deterministic(
     """Compute deterministic metrics."""
     pred, obs = ensure_common_xarray_format(pred, obs)  # _check_args(pred, obs)
 
-    aggregating_dim = _check_aggregating_dim(aggregating_dim, obs)
-    _check_shared_dims(aggregating_dim, pred, obs)
+    sample_dims = _check_sample_dims(sample_dims, obs)
+    _check_shared_dims(sample_dims, pred, obs)
     _check_forecast_type(forecast_type)
 
     # Define default skip_options options
@@ -188,7 +188,7 @@ def deterministic(
     ds_skill = _xr_routine(
         pred=pred,
         obs=obs,
-        dims=aggregating_dim,
+        sample_dims=sample_dims,
         compute=compute,
         **routine_kwargs,
     )

@@ -178,7 +178,7 @@ def get_metrics_info():
 def _xr_apply_routine(
     pred,
     obs,
-    dims=("time"),
+    sample_dims,
     metrics=None,
     compute=True,
     drop_options=None,
@@ -195,7 +195,7 @@ def _xr_apply_routine(
     kwargs["drop_options"] = drop_options
 
     # Define gufunc kwargs
-    input_core_dims = [dims, dims]
+    input_core_dims = [sample_dims, sample_dims]
     dask_gufunc_kwargs = {
         "output_sizes": {
             "skill": len(skill_names),

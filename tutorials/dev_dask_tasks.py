@@ -14,8 +14,7 @@ from xverif.metrics.deterministic.continuous_vectorized import (
 )
 from xverif.wrappers import ensure_dataarray
 
-aggregating_dim = ["x", "y"]
-dims = aggregating_dim
+sample_dims = ["x", "y"]
 metrics = get_available_metrics()
 
 obs = create_spatial2d_dataset(1000)
@@ -53,7 +52,7 @@ obs = obs.chunk(pred.chunks)
 
 # Stack pred and obs to have 2D dimensions (aux, sample)
 # - This operation doubles the memory
-stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)
+stacking_dict = get_stacking_dict(pred, sample_dims=sample_dims)
 pred = pred.stack(stacking_dict)
 obs = obs.stack(stacking_dict)
 

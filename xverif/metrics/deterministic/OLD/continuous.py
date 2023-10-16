@@ -168,7 +168,7 @@ def get_metrics_info():
 def _xr_apply_routine(
     pred,
     obs,
-    dims=("time"),
+    sample_dims,
     **kwargs,
 ):
     """Compute deterministic continuous metrics."""
@@ -179,7 +179,7 @@ def _xr_apply_routine(
     # TODO
 
     # Define gufunc kwargs
-    input_core_dims = [dims, dims]
+    input_core_dims = [sample_dims, sample_dims]
     dask_gufunc_kwargs = {
         "output_sizes": {
             "skill": len(skill_names),

@@ -201,24 +201,24 @@ def get_metrics_info():
 def _xr_apply_routine(
     pred,
     obs,
-    dims=("time"),
+    sample_dims,
     **kwargs,
 ):
     """Compute deterministic continuous metrics.
 
-    dims must be a tuple, unique values
+    sample_dims must be a tuple, unique values
     """
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
 
     # Update kwargs with axis
     n_dims = len(list(pred.dims))
-    n_aggregating_dims = len(dims)
-    axis = list(range(n_dims - n_aggregating_dims, n_dims))
+    n_sample_dims = len(sample_dims)
+    axis = list(range(n_dims - n_sample_dims, n_dims))
     kwargs.update({"axis": axis})
 
     # Define gufunc kwargs
-    input_core_dims = [dims, dims]
+    input_core_dims = [sample_dims, sample_dims]
     dask_gufunc_kwargs = {
         "output_sizes": {
             "skill": len(skill_names),

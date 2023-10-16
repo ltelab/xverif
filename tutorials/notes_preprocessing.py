@@ -31,11 +31,13 @@ Created on Fri Oct 13 12:24:32 2023.
 
 ## Technical points
 # Vectorized implementation
+# - Mask data !
+# - Masking is done by chunk !
 # - Chunks between pred and obs must be aligned
 # - Expects dask arrays
-# - Masking is done by chunk !
 
 # Loop implementation
+# - Drop data !
 # - Expect pred and obs 1D numpy vectors
 
 # pandas & xarray functions only provide the skipna argument
@@ -72,23 +74,9 @@ Created on Fri Oct 13 12:24:32 2023.
 #     --> {var1: {}, var2: {}}
 #     --> var not specified set to default masking options
 
-
 ### Vectorized thresholds
 # - Masking above/below multiple thresholds
 #   --> Add new dimension corresponding to the masking condition !
-
-
-####--------------------------------------------------------------------------.
-#### Chunk preprocessing
-# - Point/Pixel-wise
-#   --> Preprocessing apply to each samples vector (i.e. pixel timeseries) separately
-#   --> ds_forecast.chunk({"time": -1}
-
-# - Spatial chunks
-#   --> Preprocessing apply to spatial region
-#   --> If given timestep only one pixel nan (in obs or pred), all timesteps becomes nan
-#   --> Or metrics deals with np.nan (but not efficient?)
-#   --> Or looping over dimensions with numba and avoid vectorization?
 
 ####--------------------------------------------------------------------------.
 # Resampling / Bootstrapping:

@@ -57,7 +57,7 @@ ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
     forecast_type="continuous",
-    aggregating_dim="time",
+    sample_dims="time",
     implementation="loop",
     skip_options=skip_options,
 )
@@ -67,7 +67,7 @@ ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
     forecast_type="continuous",
-    aggregating_dim="time",
+    sample_dims="time",
     implementation="vectorized",
     skip_options=skip_options,
 )
@@ -86,8 +86,7 @@ obs = create_spatial2d_dataset(100)
 pred = create_ensemble_forecast_dataset(100)
 
 forecast_type = "continuous"
-aggregating_dim = ["x", "y"]
-dims = aggregating_dim
+sample_dims = ["x", "y"]
 skip_options = [
     {"nan": True},
     {"inf": True, "conditioned_on": "any"},
@@ -116,7 +115,7 @@ ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
     forecast_type="continuous",
-    aggregating_dim=["x", "y"],
+    sample_dims=["x", "y"],
     implementation=implementation,
     metrics=metrics,
     # Preprocessing
@@ -127,7 +126,7 @@ ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
     forecast_type="continuous",
-    aggregating_dim=["x", "y"],
+    sample_dims=["x", "y"],
     implementation=implementation,
     metrics=metrics,
     compute=False,
@@ -163,7 +162,7 @@ for implementation in implementations:
         pred=pred,
         obs=obs,
         forecast_type="continuous",
-        aggregating_dim=["x", "y"],
+        sample_dims=["x", "y"],
         implementation=implementation,
         skip_options=[],
     )
@@ -173,7 +172,7 @@ for implementation in implementations:
 #### DEBUG of vectorized code
 # from xverif.metrics.deterministic.continuous_vectorized import get_stacking_dict
 # obs_broadcasted = obs.broadcast_like(pred)
-# stacking_dict = get_stacking_dict(pred, aggregating_dim=dims)
+# stacking_dict = get_stacking_dict(pred, sample_dims=sample_dims)
 # pred = pred.stack(stacking_dict)
 # obs = obs_broadcasted.stack(stacking_dict)
 
