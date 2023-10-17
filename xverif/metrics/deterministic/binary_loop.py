@@ -14,7 +14,7 @@ from xverif.utils.timing import print_elapsed_time
 
 
 def _get_metrics(pred, obs, drop_options=None):
-    """Compute deterministic metrics for categorical binary predictions.
+    """Compute deterministic metrics for binary predictions.
 
     This function expects pred and obs to be 1D vector of same size.
     """
@@ -25,9 +25,9 @@ def _get_metrics(pred, obs, drop_options=None):
 
     # If not non-NaN data, return a vector of nan data
     if len(pred) == 0:
-        return np.ones(12) * np.nan
+        return np.ones(50) * np.nan
 
-    # calculate number hits, misses, false alarms, correct rejects
+    # Calculate number hits, misses, false alarms, correct rejects
     H = np.nansum(np.logical_and(pred == 1, obs == 1), dtype="float64")
     M = np.nansum(np.logical_and(pred == 0, obs == 1), dtype="float64")
     F = np.nansum(np.logical_and(pred == 1, obs == 0), dtype="float64")
@@ -129,8 +129,7 @@ def _get_metrics(pred, obs, drop_options=None):
     HSS = 2 * (H * R - F * M) / ((H + M) * (M + R) + (H + F) * (F + R) + EPS)
     HSS_std = np.sqrt(
         (FA_std**2) * (HSS**2) * (1 / (POD - FA + EPS) + (1 - s) * (1 - 2 * s)) ** 2
-        + (POD_std**2) * (HSS**2) * (1 / (POD - FA + EPS) - s * (1 - 2 * s))
-        ^ 2
+        + (POD_std**2) * (HSS**2) * (1 / (POD - FA + EPS) - s * (1 - 2 * s)) ** 2
     )
 
     # Equitable Threat Score (ETS)
@@ -217,64 +216,64 @@ def _get_metrics(pred, obs, drop_options=None):
         / (POD * (np.log(FA * (1 - POD)) + np.log(POD * (1 - FA))) ** 2)
         * np.sqrt(POD * (1 - POD) / (p * N))
     )
-
+    
+    
     # Define metrics
-    skills = np.array(
-        [
-            H,
-            F,
-            M,
-            R,
-            TP,
-            FN,
-            FP,
-            TN,
-            POD,
-            POD_std,
-            FAR,
-            FAR_std,
-            FA,
-            FA_std,
-            SR,
-            SR_std,
-            # s
-            POR,
-            PFR,
-            MR,
-            CRR,
-            Informedness,
-            Markedness,
-            FB,
-            HK,
-            ACC,
-            ACC_std,
-            CSI,
-            CSI_std,
-            HSS,
-            HSS_std,
-            ETS,
-            ETS_std,
-            OR,
-            LOR,
-            ORSS,
-            ORSS_std,
-            MCC,
-            F1,
-            F2,
-            J,
-            LS,
-            YulesQ,
-            EDS,
-            EDS_std,
-            SEDS,
-            SEDS_std,
-            EDI,
-            EDI_std,
-            SEDI,
-            SEDI_std,
-        ]
-    )
-
+    dictionary = {
+        'H': H,
+        'F': F,
+        'M': M,
+        'R': R,
+        'TP': TP,
+        'FN': FN,
+        'FP': FP,
+        'TN': TN,
+        'POD': POD,
+        'POD_std': POD_std,
+        'FAR': FAR,
+        'FAR_std': FAR_std,
+        'FA': FA,
+        'FA_std': FA_std,
+        'SR': SR,
+        'SR_std': SR_std,
+        'POR': POR,
+        'PFR': PFR,
+        'MR': MR,
+        'CRR': CRR,
+        'Informedness': Informedness,
+        'Markedness': Markedness,
+        'FB': FB,
+        'HK': HK,
+        'ACC': ACC,
+        'ACC_std': ACC_std,
+        'CSI': CSI,
+        'CSI_std': CSI_std,
+        'HSS': HSS,
+        'HSS_std': HSS_std,
+        'ETS': ETS,
+        'ETS_std': ETS_std,
+        'OR': OR,
+        'LOR': LOR,
+        'ORSS': ORSS,
+        'ORSS_std': ORSS_std,
+        'MCC': MCC,
+        'F1': F1,
+        'F2': F2,
+        'J': J,
+        'LS': LS,
+        'YulesQ': YulesQ,
+        'EDS': EDS,
+        'EDS_std': EDS_std,
+        'SEDS': SEDS,
+        'SEDS_std': SEDS_std,
+        'EDI': EDI,
+        'EDI_std': EDI_std,
+        'SEDI': SEDI,
+        'SEDI_std': SEDI_std
+    }
+    
+    skills = np.array(list(dictionary.values()))
+    # metrics = list(dictionary)
     return skills
 
 
@@ -285,57 +284,56 @@ def get_metrics_info():
     """Get metrics information."""
     func = _get_metrics
     skill_names = [
-        "H",
-        "F",
-        "M",
-        "R",
-        "TP",
-        "FN",
-        "FP",
-        "TN",
-        "POD",
-        "POD_std",
-        "FAR",
-        "FAR_std",
-        "FA",
-        "FA_std",
-        "SR",
-        "SR_std",
-        # s
-        "POR",
-        "PFR",
-        "MR",
-        "CRR",
-        "Informedness",
-        "Markedness",
-        "FB",
-        "HK",
-        "ACC",
-        "ACC_std",
-        "CSI",
-        "CSI_std",
-        "HSS",
-        "HSS_std",
-        "ETS",
-        "ETS_std",
-        "OR",
-        "LOR",
-        "ORSS",
-        "ORSS_std",
-        "MCC",
-        "F1",
-        "F2",
-        "J",
-        "LS",
-        "YulesQ",
-        "EDS",
-        "EDS_std",
-        "SEDS",
-        "SEDS_std",
-        "EDI",
-        "EDI_std",
-        "SEDI",
-        "SEDI_std",
+        'H',
+        'F',
+        'M',
+        'R',
+        'TP',
+        'FN',
+        'FP',
+        'TN',
+        'POD',
+        'POD_std',
+        'FAR',
+        'FAR_std',
+        'FA',
+        'FA_std',
+        'SR',
+        'SR_std',
+        'POR',
+        'PFR',
+        'MR',
+        'CRR',
+        'Informedness',
+        'Markedness',
+        'FB',
+        'HK',
+        'ACC',
+        'ACC_std',
+        'CSI',
+        'CSI_std',
+        'HSS',
+        'HSS_std',
+        'ETS',
+        'ETS_std',
+        'OR',
+        'LOR',
+        'ORSS',
+        'ORSS_std',
+        'MCC',
+        'F1',
+        'F2',
+        'J',
+        'LS',
+        'YulesQ',
+        'EDS',
+        'EDS_std',
+        'SEDS',
+        'SEDS_std',
+        'EDI',
+        'EDI_std',
+        'SEDI',
+        'SEDI_std'
     ]
     return func, skill_names
 
@@ -344,16 +342,20 @@ def get_metrics_info():
 def _xr_apply_routine(
     pred,
     obs,
-    dims=["time"],
-    **kwargs,
+    sample_dims,
+    metrics=None,
+    compute=True,
+    drop_options=None,
 ):
     # Retrieve function and skill names
     func, skill_names = get_metrics_info()
 
-    # Check kwargs
-    # TODO
+    # Define kwargs
+    kwargs = {}
+    kwargs["drop_options"] = drop_options
 
     # Define gufunc kwargs
+    input_core_dims = [sample_dims, sample_dims]
     dask_gufunc_kwargs = {
         "output_sizes": {
             "skill": len(skill_names),
@@ -361,12 +363,12 @@ def _xr_apply_routine(
     }
 
     # Apply ufunc
-    ds_skill = xr.apply_ufunc(
+    da_skill = xr.apply_ufunc(
         func,
         pred,
         obs,
         kwargs=kwargs,
-        input_core_dims=[dims, dims],
+        input_core_dims=input_core_dims,
         output_core_dims=[["skill"]],  # returned data has one dimension
         vectorize=True,
         dask="parallelized",
@@ -375,10 +377,18 @@ def _xr_apply_routine(
     )  # dtype
 
     # Compute the skills
-    with ProgressBar():
-        ds_skill = ds_skill.compute()
-
-    ds_skill = ds_skill.assign_coords({"skill": skill_names})
+    if compute:
+        with ProgressBar():
+            da_skill = da_skill.compute()
+  
+    # Add skill coordinates
+    da_skill = da_skill.assign_coords({"skill": skill_names})
+  
+    # Subset skill coordinates
+    # TODO
+  
+    # Convert to skill Dataset
+    ds_skill = da_skill.to_dataset(dim="skill")
 
     # Return the skill Dataset
     return ds_skill

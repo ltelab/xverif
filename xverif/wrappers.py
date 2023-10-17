@@ -13,7 +13,7 @@ import xarray as xr
 from xverif.masking import mask_datasets
 
 ValidForecastType = tp.Literal[
-    "continuous", "categorical_binary", "categorical_multiclass"
+    "continuous", "binary", "multiclass", "probability", "ordinal", "count"
 ]
 ValidMetricType = tp.Literal["deterministic", "probabilistic", "spatial"]
 

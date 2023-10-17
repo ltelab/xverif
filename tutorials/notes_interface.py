@@ -11,7 +11,7 @@ Created on Fri Oct 13 12:22:02 2023.
 
 ####--------------------------------------------------------------------------.
 #### Data, Metric, Support Type
-# data_type: binary, multiclass, ordered, probability, continuous
+# data_type: continuous, probability, binary, multiclass, ordered (ordinal), rank, count
 # metric_type: deterministic, probabilistic
 # support_type: point, spatial, temporal
 
@@ -102,6 +102,11 @@ ds_skills = xverif.deterministic(
 
 ####--------------------------------------------------------------------------.
 #### TODOs
+# 'probability'
+# - Require specifiying the category_dim !
+# - based on length --> define if binary or multiclass probability
+
+
 # TODO (spatial, temporal)
 # --> Can be deterministic or probabilistic metrics
 # --> Use of support_type ?
@@ -114,9 +119,10 @@ ds_skills = xverif.deterministic(
 # - Time scale of interest ?
 # - Daily/Weekly/Monthly/Seasonal/Annual ...
 
-
-# TODO Distribution metrics
-# --> in which <XXXX_type>?
+# Distribution metrics
+# --> Part of continuous?
+# --> If deterministic, over the sample dims
+# --> If probabilistic, over realization dims and/or sample dims?
 
 # TODO DESIGN
 # --> How to apply to single sample vectors --> xverif.compute_metric("MSE", pred, obs)
@@ -126,8 +132,6 @@ ds_skills = xverif.deterministic(
 # TODO:
 # - Statistical tests
 # - Resampling / Bootstrapping
-# - Distribution metrics?
-
 
 # Others possibilities
 # - YAML file with all available metrics

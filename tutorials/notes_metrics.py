@@ -137,7 +137,9 @@ Created on Fri Oct 13 12:08:07 2023.
 # Hinge loss
 # Zero_one_loss
 
-# MultiClass
+
+####--------------------------------------------------------------------------.
+#### MultiClass
 # - Collections of binary problems
 # - Add dimension avg_method: [macro, micro, weighted]
 # - https://permetrics.readthedocs.io/en/latest/pages/classification.html
@@ -146,21 +148,8 @@ Created on Fri Oct 13 12:08:07 2023.
 
 # - https://mmuratarat.github.io/2020-01-25/multilabel_classification_metrics
 
-####--------------------------------------------------------------------------.
-#### Categorical binary (probability)
-# - GINI
-# - ROC-AUC score
-# - logloss
-# - brier score
-# - Kolmogorov-Smirnov statistic
-# --> https://neptune.ai/blog/evaluation-metrics-binary-classification
-
-####--------------------------------------------------------------------------.
-##### Categorical multiclass
-# --> If probababilities, add tool to predict classes using various probabilities (--> prob_threshold dimension)
-# --> Expect classes (0,1) or (0 to n) in metrics calculations
-
 # https://www.cawcr.gov.au/projects/verification/
+
 
 ####--------------------------------------------------------------------------.
 #### - Weights options

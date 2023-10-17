@@ -43,21 +43,27 @@ pred2, obs2 = align_xarray_objects(pred, obs)
 obs = create_timeseries_dataset(100)
 pred = create_timeseries_forecast_dataset(100)
 
-skip_options = None
+
+data_type = "continuous"
+data_type = "binary"
+
+sample_dims = "time"
 skip_options = [
     {"nan": True},
     {"inf": True, "conditioned_on": "any"},
-    # {"equal_values": False},
-    {"values": 0, "conditioned_on": "both"},
-    # {"below_threshold": 1.5, "conditioned_on": "both"},
-    # {"above_threshold": 3, "conditioned_on": "obs"},
 ]
+
+implementation = "vectorized"
+implementation = "loop"
+
+metrics = None
+
 
 ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
-    data_type="continuous",
-    sample_dims="time",
+    data_type=data_type,
+    sample_dims=sample_dims,
     implementation="loop",
     skip_options=skip_options,
 )
@@ -66,8 +72,8 @@ ds_skills = xverif.deterministic(
 ds_skills1 = xverif.deterministic(
     pred=pred,
     obs=obs,
-    data_type="continuous",
-    sample_dims="time",
+    data_type=data_type,
+    sample_dims=sample_dims,
     implementation="vectorized",
     skip_options=skip_options,
 )
@@ -93,6 +99,7 @@ obs = create_spatial2d_dataset(100)
 pred = create_ensemble_forecast_dataset(100)
 
 data_type = "continuous"
+data_type = "binary"
 sample_dims = ["x", "y"]
 skip_options = [
     {"nan": True},
@@ -100,9 +107,13 @@ skip_options = [
     {"values": 0, "conditioned_on": "both"},
     {"below_threshold": 1.5, "conditioned_on": "both"},
 ]
+
+implementation = "loop"
 implementation = "vectorized"
-metrics = None
+
+
 metrics = ["MAE", "rob_MAE"]
+metrics = None
 
 # Chunk finely on auxiliary dimension if going out of memory !
 pred = pred.chunk(
@@ -121,8 +132,8 @@ obs = obs.chunk({"x": -1, "y": -1})
 ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
-    data_type="continuous",
-    sample_dims=["x", "y"],
+    data_type=data_type,
+    sample_dims=sample_dims,
     implementation=implementation,
     metrics=metrics,
     # Preprocessing
@@ -132,8 +143,8 @@ ds_skills = xverif.deterministic(
 ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,
-    data_type="continuous",
-    sample_dims=["x", "y"],
+    data_type=data_type,
+    sample_dims=sample_dims,
     implementation=implementation,
     metrics=metrics,
     compute=False,

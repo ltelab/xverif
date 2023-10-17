@@ -373,7 +373,7 @@ def get_metrics(
         2D prediction array of shape (aux, sample)
         The columns corresponds to the sample predictions to be used
         to compute the metrics (for each row).
-    obs : TYPE
+    obs : np.ndarray
         2D observation array with same shape as pred: (aux, sample).
         The columns corresponds to the sample observations to be used
         to compute the metrics (for each row).

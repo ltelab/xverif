@@ -188,5 +188,3 @@ def spearman_r(x, y):
     # TODO: implement np.nan_rankdata (now is wrong)
     corr = pearson_r(x=rankdata(x, axis=1), y=rankdata(y, axis=1))
     return corr
-
-

@@ -9,13 +9,25 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
+# Implement binary data_type
 # Create nanquantile dask function using mapblock !
 
-# Implement binary data_type
+# Implement multiclass data_type
+
+# Implement ordinal data_type
+
+# Implement probability
+
+# Add distribution metrics to continuous
+# - https://permetrics.readthedocs.io/en/latest/pages/regression/KLD.html
+# - https://permetrics.readthedocs.io/en/latest/pages/regression/JSD.html
+# - Wasserstein
 
 # Expand thresholds (category ...) --> Add new dimension
 
 # Categorize / Binning (xcategorize, xbinning)¨
+
+# Refactor forecast reshape utility
 
 # Support dimensions
 # --> Should also be included in sample_dims ?
