@@ -91,8 +91,16 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     F = np.nansum(np.logical_and(pred == 1, obs == 0), axis=axis, dtype="float64")
     R = np.nansum(np.logical_and(pred == 0, obs == 0), axis=axis, dtype="float64")
 
+    # Number of samples
     N = H + F + M + R
 
+    # Correct predictions
+    N_correct = H + R
+
+    # Wrong predictions
+    N_wrong = F + M
+
+    # True/False Positive/Negative
     TP = H
     FN = M
     FP = F
@@ -111,7 +119,7 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     POR = R / (F + R + EPS)
 
     # Precision
-    # - TODO Success ratio (SR?)
+    # - Success Ratio
     precision = H / (H + F + EPS)
 
     # Correct-Rejection Ratio
@@ -164,22 +172,31 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
 
     # Critical Success Index
     # - Threat Score
-    CSI = H / (H + M + F + EPS)
+    CSI = H / (H + N_wrong + EPS)
     CSI_std = np.sqrt(
-        (CSI**2) * ((1 - POD) / (H + EPS) + F * (1 - FA) / ((H + F + M) ** 2 + EPS))
+        (CSI**2) * ((1 - POD) / (H + EPS) + F * (1 - FA) / ((H + N_wrong) ** 2 + EPS))
     )
 
     # Frequency Bias
     FB = (H + F) / (H + M + EPS)
 
-    # ????
+    # Actual positives
     s = (H + M) / N
 
-    # Accuracy (fraction correct)
+    # Hamming Loss
+    # - Zero-One Loss
+    # - Overall error rate
+    # - 1−ACC
+    error_rate = N_wrong / N
+
+    # Accuracy
+    # - Fraction correct
+    # - Accuracy score
     # - Overall accuracy (OA)
     # - Percent correct (PC)
-    # - Exact match Ratio
-    ACC = (H + R) / N
+    # - Exact match Ratio (EMR) (?)
+    # - Hamming score
+    ACC = (N_correct) / N
     ACC_std = np.sqrt(s * POD * (1 - POD) / N + (1 - s) * FA * (1 - FA) / N)
 
     # Heidke Skill Score (-1 < HSS < 1) < 0 implies no skill
@@ -195,23 +212,26 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     # --> TODO: check equality
     # ETS = (POD - FA) / ((1 - s * POD) / (1 - s) + FA * (1 - s) / s)
     HITSrandom = 1 * (H + M) * (H + F) / N
-    ETS = (H - HITSrandom) / (H + F + M - HITSrandom + EPS)
+    ETS = (H - HITSrandom) / (H + N_wrong - HITSrandom + EPS)
     ETS_std = np.sqrt(4 * (HSS_std**2) / ((2 - HSS + EPS) ** 4))
 
     # F1 score
     # - Dice Coefficient
     # - The harmonic mean of precision and sensitivity (pysteps)
-    F1 = 2 * H / (2 * H + F + M + EPS)
+    F1 = 2 * H / (2 * H + N_wrong + EPS)
     # F1 = 2 * (precision * POD) / (precision + POD)
 
     # F2 score
     # - 2x emphasis on recall.
     F2 = 5 * (precision * POD) / (4 * precision + POD)
 
+    # Geometric Mean Score (GMS)
+    GMS = np.sqrt(POD * POR)
+
     # Jaccard Index
     # - Tanimoto Coefficient
     # - Intersection over Union (IoU)
-    # J = H / (H + M + F + EPS)
+    # J = H / (H + N_wrong + EPS)
     J = F1 / (2 - F1)
 
     # Matthews Correlation Coefficient
@@ -277,6 +297,9 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
 
     # Define metrics
     dictionary = {
+        "N": N,
+        "N_correct": N_correct,
+        "N_wrong": N_wrong,
         "H": H,
         "F": F,
         "M": M,
@@ -297,6 +320,7 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
         "PFR": PFR,
         "MR": MR,
         "CRR": CRR,
+        "GMS": GMS,
         "Informedness": Informedness,
         "Markedness": Markedness,
         "FB": FB,

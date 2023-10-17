@@ -10,15 +10,21 @@ Created on Fri Oct 13 12:26:23 2023.
 #### TODO ####
 ##############
 # Implement multiclass data_type
+# - Add code for per-class binary metrics (one vs all)
+# - Add code for macro/weighted average metrics
+# - Add code for "minor" averaging
+
 
 # Implement ordinal data_type
-
-# Implement probability
 
 # Add distribution metrics to continuous
 # - https://permetrics.readthedocs.io/en/latest/pages/regression/KLD.html
 # - https://permetrics.readthedocs.io/en/latest/pages/regression/JSD.html
 # - Wasserstein
+
+
+# Implement probability
+
 
 # Expand thresholds (category ...) --> Add new dimension
 
@@ -43,6 +49,10 @@ Created on Fri Oct 13 12:26:23 2023.
 # "Degrees of freedom <= 0 for slice"  # (when all np.nan in nanstd)
 # "All-NaN slice encountered"
 # "invalid value encountered in double_scalars"
+# https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/utils.py#L9
+
+# with np.errstate(divide="ignore", invalid="ignore"):
+
 
 # sklearn way to deal with division by 0
 # https://github.com/scikit-learn/scikit-learn/blob/364c77e047ca08a95862becf40a04fe9d4cd2c98/sklearn/metrics/_classification.py#L1301

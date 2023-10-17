@@ -106,37 +106,27 @@ Created on Fri Oct 13 12:08:07 2023.
 # Distribution distance?
 # KL, Jannon, Wasserstein?
 
+# https://torchmetrics.readthedocs.io/en/stable/regression/concordance_corr_coef.html
 
 ####--------------------------------------------------------------------------.
 #### Categorical binary
-# - Gerrity skill Score
-# --> https://rdrr.io/github/joaofgoncalves/SegOptim/man/GerritySkillScore.html
-# --> https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/contingency.py#L735
-# --> https://www.ecmwf.int/sites/default/files/elibrary/2010/11988-new-equitable-score-suitable-verifying-precipitation-nwp.pdf
+# - https://permetrics.readthedocs.io/en/latest/pages/classification.html
 
-# Add np.log10 everywhere !!!
-# - In categorical skills
-
-# fbeta
-# - weighted harmonic mean of precision and recall
-# beta < 1 lends more weight to precision, while beta > 1 favors recall
-# beta = 1 --> F1
-# beta = 2 --> F2
-# beta = 0 considers only precision
-# beta = np.inf considers only recall
+## F-beta score
+# - Can be interpreted as a weighted harmonic mean of the precision and recall,
+# - F-beta score reaches its best value at 1 and worst score at 0
+# - beta < 1 lends more weight to precision, while beta > 1 favors recall
+# - beta = 1 --> F1
+# - beta = 2 --> F2
+# - beta = 0 considers only precision
+# - beta = np.inf considers only recall
 # - https://towardsdatascience.com/is-f1-the-appropriate-criterion-to-use-what-about-f2-f3-f-beta-4bd8ef17e285
+# - https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html#sklearn.metrics.fbeta_score
+# - fbeta = (1 + beta**2) * (precision * POD) / (beta**2 * precision + POD)
 
-# fbeta = (1 + beta**2) * (precision * POD) / (beta**2 * precision + POD)
 
-# Hamming Score
-# - fraction of labels that are incorrectly predicted.
-# - zero_one_loss  = 1 - ACC
-# HS = (F + M) / N
-
-# Hamming Loss (HL)
-# Hinge loss
-# Zero_one_loss
-
+# TODO: Add np.log10 everywhere !!!
+# - In categorical skills
 
 ####--------------------------------------------------------------------------.
 #### MultiClass
@@ -147,6 +137,10 @@ Created on Fri Oct 13 12:08:07 2023.
 # - https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html#sklearn.metrics.f1_score
 
 # - https://mmuratarat.github.io/2020-01-25/multilabel_classification_metrics
+
+# MCM
+# https://github.com/scikit-learn/scikit-learn/blob/d99b728b3a7952b2111cf5e0cb5d14f92c6f3a80/sklearn/metrics/_classification.py#L1551
+
 
 # https://www.cawcr.gov.au/projects/verification/
 
@@ -183,6 +177,9 @@ Created on Fri Oct 13 12:08:07 2023.
 
 ####--------------------------------------------------------------------------.
 #### Spatial metrics
+# - https://torchmetrics.readthedocs.io/en/stable/image/error_relative_global_dimensionless_synthesis.html
 
+####--------------------------------------------------------------------------.
+#### Image metrics
 
 ####--------------------------------------------------------------------------.
