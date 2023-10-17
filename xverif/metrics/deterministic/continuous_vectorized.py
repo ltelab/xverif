@@ -5,6 +5,7 @@ Created on Tue Jun 13 14:38:26 2023.
 
 @author: ghiggi
 """
+import dask.array
 import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
@@ -15,6 +16,13 @@ from xverif.metrics.deterministic.correlations_vectorized import (
 )
 from xverif.utils.timing import print_elapsed_time
 from xverif.utils.warnings import suppress_warnings
+
+
+def ensure_dask_dataarray(dataarray, axis=0):
+    """Ensure dask array with chunking only across sample_dim."""
+    if isinstance(dataarray.data, np.ndarray):
+        dataarray.data = dask.array.from_array(dataarray.data, chunks=("auto", -1))
+    return dataarray
 
 
 def get_aux_dims(pred, sample_dims):
@@ -52,6 +60,56 @@ def _mIOA(error, pred, obs_anomaly, obs_Mean, j=1, axis=1):
     )
     mIoA = 1 - np.nansum(error**j, axis=axis) / (denominator + EPS)
     return mIoA
+
+
+def nanquantiles(arr, q, axis):
+    """
+    Compute quantiles of a numpy/dask array along a specified axis using numpy's nanquantile.
+
+    Along the axis dimension, it requires a single chunk !
+
+    Parameters
+    ----------
+    arr : dask.array.Array
+        Input 2D dask array.
+    q : list
+        List of quantile values to compute.
+    axis : int
+        Axis along which the quantiles are computed.
+
+    Returns
+    -------
+    dask.array.Array
+        Dask array of shape (arr.shape[0], len(q)) containing computed quantiles.
+
+    """
+
+    def _compute_quantiles(arr, axis, q):
+        return np.nanquantile(arr, q=q, axis=axis).T
+
+    if isinstance(arr, np.ndarray):
+        quantiles = _compute_quantiles(arr, axis=axis, q=q)
+    else:  # dask array
+        # Check that the presence of a single chunk along the axis
+        if len(arr.chunks[axis]) > 1:
+            raise ValueError(
+                f"Array has multiple chunks along axis {axis}. Ensure a single chunk."
+            )
+
+        # Define output chunk
+        output_chunks = list(arr.chunks)
+        output_chunks[axis] = (len(q),)
+
+        # Compute quantiles using map_blocks
+        quantiles = dask.array.map_blocks(
+            _compute_quantiles,
+            arr,
+            axis=axis,
+            q=q,
+            dtype=arr.dtype,
+            chunks=output_chunks,
+        )
+    return quantiles
 
 
 def get_available_metrics():
@@ -140,14 +198,6 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     error_SD = np.nanstd(error, axis=axis)
 
     ##------------------------------------------------------------------------.
-    # TODO: Scatter
-    # - Scatter
-    # --> Half the distance between the 16% and 84% percentiles with error dB(pred/obs)
-    # error_db = 10 * np.log10(pred / (obs + EPS))
-    # q16, q25, q50, q75, q84 = np.nanquantile(error_db, q=[0.16, 0.25, 0.5, 0.75, 0.84], axis=axis)
-    # SCATTER = (q84 - q16) / 2.0
-
-    ##------------------------------------------------------------------------.
     # - Coefficient of variability
     pred_CoV = pred_SD / (pred_Mean + EPS)
     obs_CoV = obs_SD / (obs_Mean + EPS)
@@ -215,18 +265,33 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     mIoA3 = _mIOA(error, pred, obs_anomaly, obs_Mean, j=3, axis=axis)
 
     ##------------------------------------------------------------------------.
-    # - Median
-    obs_q25, obs_Median, obs_q75 = np.nanquantile(obs, q=[0.25, 0.50, 0.75], axis=axis)
-    pred_q25, pred_Median, pred_q75 = np.nanquantile(
-        pred, q=[0.25, 0.50, 0.75], axis=axis
-    )
-    error_q25, error_Median, error_q75 = np.nanquantile(
-        error, q=[0.25, 0.50, 0.75], axis=axis
-    )
+    # - Median , Q25 and Q75
+    obs = nanquantiles(obs, q=[0.25, 0.50, 0.75], axis=axis)
+    obs_q25 = obs[:, 0]
+    obs_Median = obs[:, 1]
+    obs_q75 = obs[:, 2]
+
+    pred = nanquantiles(pred, q=[0.25, 0.50, 0.75], axis=axis)
+    pred_q25 = pred[:, 0]
+    pred_Median = pred[:, 1]
+    pred_q75 = pred[:, 2]
+
+    error = nanquantiles(error, q=[0.25, 0.50, 0.75], axis=axis)
+    error_q25 = error[:, 0]
+    error_Median = error[:, 1]
+    error_q75 = error[:, 2]
 
     # pred_Median = np.nanmedian(pred, axis=axis)
     # obs_Median = np.nanmedian(obs, axis=axis)
     # error_Median = np.nanmedian(error, axis=axis)
+
+    ##------------------------------------------------------------------------.
+    # TODO: Scatter
+    # - Scatter
+    # --> Half the distance between the 16% and 84% percentiles with error dB(pred/obs)
+    # error_db = 10 * np.log10(pred / (obs + EPS))
+    # q16, q25, q50, q75, q84 = np.nanquantile(error_db, q=[0.16, 0.25, 0.5, 0.75, 0.84], axis=axis)
+    # SCATTER = (q84 - q16) / 2.0
 
     ##------------------------------------------------------------------------.
     # - Mean Absolute Deviation
@@ -420,15 +485,20 @@ def _xr_apply_routine(
     # obs_broadcasted['var0'].data.flags # view (Both contiguous are False)
     # obs_broadcasted['var0'].data.base  # view (Return array and not None)
 
-    # Ensure obs same chunks of pred on auxiliary dims
-    # TODO: now makes same as pred --> TO IMPROVE
-    obs = obs.chunk(pred.chunks)
-
     # Stack pred and obs to have 2D dimensions (aux, sample)
     # - This operation doubles the memory
     stacking_dict = get_stacking_dict(pred, sample_dims=sample_dims)
     pred = pred.stack(stacking_dict)
     obs = obs.stack(stacking_dict)
+
+    # If still numpy array, rechunk along sample_dim axis
+    # --> Maybe worth rechunking before stacking to avoid big copy?)
+    pred = ensure_dask_dataarray(pred)
+    obs = ensure_dask_dataarray(obs)
+
+    # Ensure obs same chunks of pred on auxiliary dims
+    # TODO: now makes same as pred --> TO IMPROVE
+    # obs = obs.chunk(pred.chunks)
 
     # Preprocess
     # - Based on kwargs

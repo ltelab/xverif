@@ -53,12 +53,6 @@ skip_options = [
     {"inf": True, "conditioned_on": "any"},
 ]
 
-implementation = "vectorized"
-implementation = "loop"
-
-metrics = None
-
-
 ds_skills = xverif.deterministic(
     pred=pred,
     obs=obs,

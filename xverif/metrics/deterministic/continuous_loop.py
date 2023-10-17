@@ -80,14 +80,6 @@ def _get_metrics(pred, obs, drop_options=None):
     error_SD = np.std(error)
 
     ##------------------------------------------------------------------------.
-    # TODO: Scatter
-    # - Scatter
-    # --> Half the distance between the 16% and 84% percentiles with error dB(pred/obs)
-    # error_db = 10 * np.log10(pred / (obs + EPS))
-    # q16, q25, q50, q75, q84 = np.quantile(error_db, q=[0.16, 0.25, 0.5, 0.75, 0.84])
-    # SCATTER = (q84 - q16) / 2.0
-
-    ##------------------------------------------------------------------------.
     # - Coefficient of variability
     pred_CoV = pred_SD / (pred_Mean + EPS)
     obs_CoV = obs_SD / (obs_Mean + EPS)
@@ -162,6 +154,14 @@ def _get_metrics(pred, obs, drop_options=None):
     # pred_Median = np.median(pred)
     # obs_Median = np.median(obs)
     # error_Median = np.median(error)
+
+    ##------------------------------------------------------------------------.
+    # TODO: Scatter
+    # - Scatter
+    # --> Half the distance between the 16% and 84% percentiles with error dB(pred/obs)
+    # error_db = 10 * np.log10(pred / (obs + EPS))
+    # q16, q25, q50, q75, q84 = np.quantile(error_db, q=[0.16, 0.25, 0.5, 0.75, 0.84])
+    # SCATTER = (q84 - q16) / 2.0
 
     ##------------------------------------------------------------------------.
     # - Mean Absolute Deviation

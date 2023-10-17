@@ -9,9 +9,6 @@ Created on Fri Oct 13 12:26:23 2023.
 ##############
 #### TODO ####
 ##############
-# Implement binary data_type
-# Create nanquantile dask function using mapblock !
-
 # Implement multiclass data_type
 
 # Implement ordinal data_type

@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 17 10:27:44 2023
+Created on Tue Oct 17 10:27:44 2023.
 
 @author: ghiggi
 """
 
-# In the dynamic landscape of forecasting and prediction, verification remains a cornerstone. 
+# In the dynamic landscape of forecasting and prediction, verification remains a cornerstone.
 # To effectively evaluate the accuracy and reliability of models, a nuanced approach is essential.
-#  Our software, xverif, has been meticulously designed to cater to this complexity, 
+#  Our software, xverif, has been meticulously designed to cater to this complexity,
 #  offering a systematic framework for verifying predictions across a myriad of applications.
 
-# 'xverif' is engineered to handle n-dimensional data arrays using xarray, 
+# 'xverif' is engineered to handle n-dimensional data arrays using xarray,
 # ensuring optimized computations through vectorized operations and harnessing
 #  the power of Dask for efficient parallelized computations on all cores of your machine(s).
- 
+
 # At the heart of xverif's verification system lie three foundational classifications:
 
 # Data Type:
@@ -41,7 +41,7 @@ Created on Tue Oct 17 10:27:44 2023
 
 # Through xverif, we aim to provide stakeholders from diverse domains the tools they need to ensure their predictions are not just accurate, but also meaningful and actionable.
 
-# By offering this multifaceted tool, xverif facilitates a precise and adaptable verification system. 
-# Whether you're assessing binary classifications in medical diagnostics, spatial predictions in geosciences, 
-# , evaluating deterministic or probabilistic weather or financial forecasts, 
+# By offering this multifaceted tool, xverif facilitates a precise and adaptable verification system.
+# Whether you're assessing binary classifications in medical diagnostics, spatial predictions in geosciences,
+# , evaluating deterministic or probabilistic weather or financial forecasts,
 # xverif ensures your evaluations are both robust and relevant.
