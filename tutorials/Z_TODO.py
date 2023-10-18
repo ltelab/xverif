@@ -53,6 +53,9 @@ Created on Fri Oct 13 12:26:23 2023.
 
 # with np.errstate(divide="ignore", invalid="ignore"):
 
+# To avoid creating the large chunks, set the option
+#  with dask.config.set(**{'array.slicing.split_large_chunks': True}):
+
 
 # sklearn way to deal with division by 0
 # https://github.com/scikit-learn/scikit-learn/blob/364c77e047ca08a95862becf40a04fe9d4cd2c98/sklearn/metrics/_classification.py#L1301

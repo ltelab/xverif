@@ -18,8 +18,8 @@ from xverif.datasets import (
 
 # Simulate datasets
 create_timeseries_dataset(1000, data_type="continuous")  # default
-create_timeseries_dataset(1000, data_type="categorical", n_class=3)
-create_timeseries_dataset(1000, data_type="probability", n_class=3)
+create_timeseries_dataset(1000, data_type="categorical", n_categories=3)
+create_timeseries_dataset(1000, data_type="probability", n_categories=3)
 create_timeseries_forecast_dataset(1000)
 
 create_spatial2d_dataset(obs_number=1000)
@@ -36,6 +36,6 @@ create_spatial2d_dataset(
     data_type="continuous",
     aux_shape=(10, 10),
     aux_dims=["x", "y"],
-    n_class=2,
+    n_categories=2,
     n_vars=3,
 )

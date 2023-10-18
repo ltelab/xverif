@@ -68,7 +68,7 @@ pred = dask.array.from_array(obs, chunks=("auto", -1))
 #### Multiclass
 pred = np.array([2, 0, 2, 0, 1])
 obs = np.array([0, 0, 2, 0, 2])
-num_classes = 4
+n_categories = 4
 
 obs = np.array([0, 1, 2, 3])
 pred = np.array([0, 2, 1, 3])

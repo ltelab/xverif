@@ -187,7 +187,7 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
     # - Zero-One Loss
     # - Overall error rate
     # - 1−ACC
-    error_rate = N_wrong / N
+    HL = N_wrong / N
 
     # Accuracy
     # - Fraction correct
@@ -325,6 +325,7 @@ def _get_metrics(pred: np.ndarray, obs: np.ndarray) -> np.ndarray:
         "Markedness": Markedness,
         "FB": FB,
         "HK": HK,
+        "HL": HL,
         "ACC": ACC,
         "ACC_std": ACC_std,
         "CSI": CSI,
@@ -419,7 +420,7 @@ def _xr_apply_routine(
     obs = obs.chunk(pred.chunks)
 
     # Stack pred and obs to have 2D dimensions (aux, sample)
-    # - This operation doubles the memory
+    # - This operation doubles the memory (!!!)
     stacking_dict = get_stacking_dict(pred, sample_dims=sample_dims)
     pred = pred.stack(stacking_dict)
     obs = obs.stack(stacking_dict)

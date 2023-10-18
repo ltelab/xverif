@@ -84,259 +84,259 @@ Created on Mon Oct 16 21:13:34 2023.
 # - The CLOR is computed as the sum of the squared difference (for each category) of the predicted and observed cumulate log odds.
 
 
-# Example
-obs = np.array([0, 1, 2, 1, 0, 2])
-pred = np.array([0, 1, 1, 0, 0, 2])
-print(macro_mae(obs, pred))
+# # Example
+# obs = np.array([0, 1, 2, 1, 0, 2])
+# pred = np.array([0, 1, 1, 0, 0, 2])
+# print(macro_mae(obs, pred))
 
-import numpy as np
+# import numpy as np
 
-### Inputs
-# Expects from 0 to num_classes
+# ### Inputs
+# # Expects from 0 to n_categories
 
-#### Optional input arguments
-# num_classes
-# misclassification_weights
+# #### Optional input arguments
+# # n_categories
+# # misclassification_weights
 
-# Add utility to return only the confusion matrix
+# # Add utility to return only the confusion matrix
 
 
-def multiclass_confusion_matrix(obs, pred, num_classes=None):
-    """Compute the multiclass confusion matrix."""
-    if num_classes is None:
-        num_classes = max(np.max(obs), np.max(pred)) + 1
-    return np.histogram2d(obs, pred, bins=(num_classes, num_classes))[0]
+# def multiclass_confusion_matrix(obs, pred, n_categories=None):
+#     """Compute the multiclass confusion matrix."""
+#     if n_categories is None:
+#         n_categories = max(np.max(obs), np.max(pred)) + 1
+#     return np.histogram2d(obs, pred, bins=(n_categories, n_categories))[0]
 
 
-def weighted_error_rate(conf_matrix, weights=None):
-    """Compute the weighted error rate from a confusion matrix."""
-    if weights is None:
-        weights = np.ones_like(conf_matrix)
-    total_samples = np.sum(conf_matrix)
-    weighted_errors = np.sum(weights * conf_matrix)
-    # Subtract diagonal since those aren't errors
-    weighted_errors -= np.sum(np.diag(weights) * np.diag(conf_matrix))
-    return weighted_errors / total_samples
+# def weighted_error_rate(conf_matrix, weights=None):
+#     """Compute the weighted error rate from a confusion matrix."""
+#     if weights is None:
+#         weights = np.ones_like(conf_matrix)
+#     total_samples = np.sum(conf_matrix)
+#     weighted_errors = np.sum(weights * conf_matrix)
+#     # Subtract diagonal since those aren't errors
+#     weighted_errors -= np.sum(np.diag(weights) * np.diag(conf_matrix))
+#     return weighted_errors / total_samples
 
 
-def weighted_accuracy(conf_matrix, weights=None):
-    """Compute the weighted accuracy from a confusion matrix."""
-    return 1 - weighted_error_rate(conf_matrix, weights)
+# def weighted_accuracy(conf_matrix, weights=None):
+#     """Compute the weighted accuracy from a confusion matrix."""
+#     return 1 - weighted_error_rate(conf_matrix, weights)
 
 
-def misclassification_spread(conf_matrix):
-    """Compute the misclassification spread from a confusion matrix."""
-    total_misclassifications = np.sum(conf_matrix) - np.sum(np.diag(conf_matrix))
-    rows, cols = np.indices(conf_matrix.shape)
-    spread = np.sum(np.abs(rows - cols) * conf_matrix)
-    return spread / total_misclassifications
+# def misclassification_spread(conf_matrix):
+#     """Compute the misclassification spread from a confusion matrix."""
+#     total_misclassifications = np.sum(conf_matrix) - np.sum(np.diag(conf_matrix))
+#     rows, cols = np.indices(conf_matrix.shape)
+#     spread = np.sum(np.abs(rows - cols) * conf_matrix)
+#     return spread / total_misclassifications
 
 
-def overall_error_rate(conf_matrix):
-    """Compute the overall error rate from a confusion matrix."""
-    total_samples = np.sum(conf_matrix)
-    correct_predictions = np.sum(np.diag(conf_matrix))
-    return (total_samples - correct_predictions) / total_samples
+# def overall_error_rate(conf_matrix):
+#     """Compute the overall error rate from a confusion matrix."""
+#     total_samples = np.sum(conf_matrix)
+#     correct_predictions = np.sum(np.diag(conf_matrix))
+#     return (total_samples - correct_predictions) / total_samples
 
 
-def gerrity_score(y_true, y_pred, num_classes):
-    # --> https://rdrr.io/github/joaofgoncalves/SegOptim/man/GerritySkillScore.html
-    # --> https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/contingency.py#L735
-    # --> https://www.ecmwf.int/sites/default/files/elibrary/2010/11988-new-equitable-score-suitable-verifying-precipitation-nwp.pdf
+# def gerrity_score(y_true, y_pred, n_categories):
+#     # --> https://rdrr.io/github/joaofgoncalves/SegOptim/man/GerritySkillScore.html
+#     # --> https://github.com/xarray-contrib/xskillscore/blob/main/xskillscore/core/contingency.py#L735
+#     # --> https://www.ecmwf.int/sites/default/files/elibrary/2010/11988-new-equitable-score-suitable-verifying-precipitation-nwp.pdf
 
-    # CHATGPT TRIAL
+#     # CHATGPT TRIAL
 
-    # Create weights matrix based on squared differences of ranks
-    # ranks = np.arange(num_classes)
-    # weights_matrix = 1 - ((ranks[:, None] - ranks) ** 2) / (num_classes - 1)**2
+#     # Create weights matrix based on squared differences of ranks
+#     # ranks = np.arange(n_categories)
+#     # weights_matrix = 1 - ((ranks[:, None] - ranks) ** 2) / (n_categories - 1)**2
 
-    weights_matrix = 1 - np.abs(
-        np.arange(num_classes)[:, None] - np.arange(num_classes)
-    ) / (num_classes - 1)
+#     weights_matrix = 1 - np.abs(
+#         np.arange(n_categories)[:, None] - np.arange(n_categories)
+#     ) / (n_categories - 1)
 
-    # Compute confusion matrix
-    hist2d, _, _ = np.histogram2d(
-        y_true,
-        y_pred,
-        bins=num_classes,
-        range=[[-0.5, num_classes - 0.5], [-0.5, num_classes - 0.5]],
-    )
-    confusion_matrix = hist2d.T
+#     # Compute confusion matrix
+#     hist2d, _, _ = np.histogram2d(
+#         y_true,
+#         y_pred,
+#         bins=n_categories,
+#         range=[[-0.5, n_categories - 0.5], [-0.5, n_categories - 0.5]],
+#     )
+#     confusion_matrix = hist2d.T
 
-    # Compute the Gerrity score
-    score = np.sum(weights_matrix * confusion_matrix) / np.sum(confusion_matrix)
+#     # Compute the Gerrity score
+#     score = np.sum(weights_matrix * confusion_matrix) / np.sum(confusion_matrix)
 
-    return score
+#     return score
 
 
-# Example usage
-obs = np.array([0, 1, 2, 1, 0, 2, 2, 0, 1])
-pred = np.array([0, 1, 1, 0, 0, 2, 2, 1, 2])
+# # Example usage
+# obs = np.array([0, 1, 2, 1, 0, 2, 2, 0, 1])
+# pred = np.array([0, 1, 1, 0, 0, 2, 2, 1, 2])
 
-# Compute confusion matrix
-conf_matrix = multiclass_confusion_matrix(obs, pred)
+# # Compute confusion matrix
+# conf_matrix = multiclass_confusion_matrix(obs, pred)
 
-# Weights for misclassification (for demonstration; default is all ones)
-weights = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]])
+# # Weights for misclassification (for demonstration; default is all ones)
+# weights = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]])
 
-print("Confusion Matrix:\n", conf_matrix)
-print("Weighted Error Rate:", weighted_error_rate(conf_matrix, weights))
-print("Weighted Accuracy:", weighted_accuracy(conf_matrix, weights))
-print("Misclassification Spread:", misclassification_spread(conf_matrix))
-print("Overall Error Rate:", overall_error_rate(conf_matrix))
+# print("Confusion Matrix:\n", conf_matrix)
+# print("Weighted Error Rate:", weighted_error_rate(conf_matrix, weights))
+# print("Weighted Accuracy:", weighted_accuracy(conf_matrix, weights))
+# print("Misclassification Spread:", misclassification_spread(conf_matrix))
+# print("Overall Error Rate:", overall_error_rate(conf_matrix))
 
 
-def macro_mae(obs, pred):
-    """
-    Compute the Macroaverage Mean Absolute Error.
+# def macro_mae(obs, pred):
+#     """
+#     Compute the Macroaverage Mean Absolute Error.
 
-    Parameters
-    ----------
-    - obs: numpy array of true labels (should be integer labels from 0 to C-1 where C is the number of classes)
-    - pred: numpy array of predicted values (should be in the same format as obs)
+#     Parameters
+#     ----------
+#     - obs: numpy array of true labels (should be integer labels from 0 to C-1 where C is the number of classes)
+#     - pred: numpy array of predicted values (should be in the same format as obs)
 
-    Returns
-    -------
-    - Macro-MAE value
-    """
-    # List to store the MAE of each class
-    maes = []
+#     Returns
+#     -------
+#     - Macro-MAE value
+#     """
+#     # List to store the MAE of each class
+#     maes = []
 
-    # Unique classes in the observation
-    classes = np.unique(obs)
+#     # Unique classes in the observation
+#     classes = np.unique(obs)
 
-    # Compute MAE for each class and append to the list
-    for c in classes:
-        # Binary mask for the current class
-        mask = obs == c
-        # Compute and store the MAE for the current class
-        maes.append(np.mean(np.abs(pred[mask] - c)))
+#     # Compute MAE for each class and append to the list
+#     for c in classes:
+#         # Binary mask for the current class
+#         mask = obs == c
+#         # Compute and store the MAE for the current class
+#         maes.append(np.mean(np.abs(pred[mask] - c)))
 
-    # Return the average of the per-class MAEs
-    return np.mean(maes)
+#     # Return the average of the per-class MAEs
+#     return np.mean(maes)
 
 
-def macro_mae(obs, pred):
-    """
-    Compute the Macroaverage Mean Absolute Error using vectorized operations.
+# def macro_mae(obs, pred):
+#     """
+#     Compute the Macroaverage Mean Absolute Error using vectorized operations.
 
-    Parameters
-    ----------
-    - obs: numpy array of true labels
-    - pred: numpy array of predicted values
+#     Parameters
+#     ----------
+#     - obs: numpy array of true labels
+#     - pred: numpy array of predicted values
 
-    Returns
-    -------
-    - Macro-MAE value
-    """
-    # Get unique classes and their counts
-    classes, counts = np.unique(obs, return_counts=True)
+#     Returns
+#     -------
+#     - Macro-MAE value
+#     """
+#     # Get unique classes and their counts
+#     classes, counts = np.unique(obs, return_counts=True)
 
-    # Calculate absolute errors for each class using broadcasting
-    abs_errors = np.abs(pred[:, np.newaxis] - classes)
+#     # Calculate absolute errors for each class using broadcasting
+#     abs_errors = np.abs(pred[:, np.newaxis] - classes)
 
-    # Mask out errors for classes other than the true class
-    masked_errors = np.where(
-        abs_errors == abs_errors.min(axis=1, keepdims=True), abs_errors, 0
-    )
+#     # Mask out errors for classes other than the true class
+#     masked_errors = np.where(
+#         abs_errors == abs_errors.min(axis=1, keepdims=True), abs_errors, 0
+#     )
 
-    # Sum errors for each class and then average
-    classwise_errors = masked_errors.sum(axis=0) / counts
+#     # Sum errors for each class and then average
+#     classwise_errors = masked_errors.sum(axis=0) / counts
 
-    return classwise_errors.mean()
+#     return classwise_errors.mean()
 
 
-import numpy as np
+# import numpy as np
 
 
-def weighted_kappa_vectorized(obs, pred):
-    classes = np.unique(np.concatenate((obs, pred)))
-    conf_matrix = np.histogram2d(obs, pred, bins=(classes, classes))[0]
+# def weighted_kappa_vectorized(obs, pred):
+#     classes = np.unique(np.concatenate((obs, pred)))
+#     conf_matrix = np.histogram2d(obs, pred, bins=(classes, classes))[0]
 
-    weights = np.arange(len(classes))[:, None] - np.arange(len(classes))
-    weights = weights**2
+#     weights = np.arange(len(classes))[:, None] - np.arange(len(classes))
+#     weights = weights**2
 
-    obs_sum = np.sum(conf_matrix, axis=1)
-    pred_sum = np.sum(conf_matrix, axis=0)
-    expected = np.outer(obs_sum, pred_sum) / len(obs)
+#     obs_sum = np.sum(conf_matrix, axis=1)
+#     pred_sum = np.sum(conf_matrix, axis=0)
+#     expected = np.outer(obs_sum, pred_sum) / len(obs)
 
-    weighted_observed = np.sum(weights * conf_matrix)
-    weighted_expected = np.sum(weights * expected)
+#     weighted_observed = np.sum(weights * conf_matrix)
+#     weighted_expected = np.sum(weights * expected)
 
-    return 1 - (weighted_observed / weighted_expected)
+#     return 1 - (weighted_observed / weighted_expected)
 
 
-import numpy as np
+# import numpy as np
 
 
-def weighted_kappa(obs, pred):
-    # Get unique classes and the number of classes
-    classes = np.unique(np.concatenate((obs, pred)))
-    num_classes = len(classes)
+# def weighted_kappa(obs, pred):
+#     # Get unique classes and the number of classes
+#     classes = np.unique(np.concatenate((obs, pred)))
+#     n_categories = len(classes)
 
-    # Confusion matrix
-    conf_matrix = np.zeros((num_classes, num_classes))
-    for i in range(len(obs)):
-        conf_matrix[obs[i]][pred[i]] += 1
+#     # Confusion matrix
+#     conf_matrix = np.zeros((n_categories, n_categories))
+#     for i in range(len(obs)):
+#         conf_matrix[obs[i]][pred[i]] += 1
 
-    # Weights
-    weights = np.zeros((num_classes, num_classes))
-    for i in range(num_classes):
-        for j in range(num_classes):
-            weights[i][j] = (i - j) ** 2
+#     # Weights
+#     weights = np.zeros((n_categories, n_categories))
+#     for i in range(n_categories):
+#         for j in range(n_categories):
+#             weights[i][j] = (i - j) ** 2
 
-    # Expected matrix under independence
-    obs_sum = np.sum(conf_matrix, axis=1)
-    pred_sum = np.sum(conf_matrix, axis=0)
-    expected = np.outer(obs_sum, pred_sum) / len(obs)
+#     # Expected matrix under independence
+#     obs_sum = np.sum(conf_matrix, axis=1)
+#     pred_sum = np.sum(conf_matrix, axis=0)
+#     expected = np.outer(obs_sum, pred_sum) / len(obs)
 
-    # Weighted observed and expected
-    weighted_observed = np.sum(weights * conf_matrix)
-    weighted_expected = np.sum(weights * expected)
+#     # Weighted observed and expected
+#     weighted_observed = np.sum(weights * conf_matrix)
+#     weighted_expected = np.sum(weights * expected)
 
-    return 1 - (weighted_observed / weighted_expected)
+#     return 1 - (weighted_observed / weighted_expected)
 
 
-import numpy as np
+# import numpy as np
 
 
-def cumulative_log_odds_ratio(obs, pred):
-    """
-    Compute the Cumulative Log Odds Ratio (C-LOR) for ordinal data.
+# def cumulative_log_odds_ratio(obs, pred):
+#     """
+#     Compute the Cumulative Log Odds Ratio (C-LOR) for ordinal data.
 
-    For each ordinal level k, compute the cumulative odds as the ratio of the number of observations less than or equal to k to the number greater than k.
-    Take the natural log of the odds ratio to get the log odds.
-    C-LOR is then the sum of the squared differences between the observed and predicted log odds.
+#     For each ordinal level k, compute the cumulative odds as the ratio of the number of observations less than or equal to k to the number greater than k.
+#     Take the natural log of the odds ratio to get the log odds.
+#     C-LOR is then the sum of the squared differences between the observed and predicted log odds.
 
-    Parameters
-    ----------
-    - obs: numpy array of true ordinal labels
-    - pred: numpy array of predicted ordinal labels
+#     Parameters
+#     ----------
+#     - obs: numpy array of true ordinal labels
+#     - pred: numpy array of predicted ordinal labels
 
-    Returns
-    -------
-    - C-LOR value
-    """
-    classes = np.unique(np.concatenate((obs, pred)))
+#     Returns
+#     -------
+#     - C-LOR value
+#     """
+#     classes = np.unique(np.concatenate((obs, pred)))
 
-    def compute_log_odds(data):
-        less_than_or_equal_to_k = np.array([np.sum(data <= k) for k in classes])
-        greater_than_k = len(data) - less_than_or_equal_to_k
-        odds = less_than_or_equal_to_k / greater_than_k
-        return np.log(odds + np.finfo(float).eps)  # small value added to prevent log(0)
+#     def compute_log_odds(data):
+#         less_than_or_equal_to_k = np.array([np.sum(data <= k) for k in classes])
+#         greater_than_k = len(data) - less_than_or_equal_to_k
+#         odds = less_than_or_equal_to_k / greater_than_k
+#         return np.log(odds + np.finfo(float).eps)  # small value added to prevent log(0)
 
-    log_odds_obs = compute_log_odds(obs)
-    log_odds_pred = compute_log_odds(pred)
+#     log_odds_obs = compute_log_odds(obs)
+#     log_odds_pred = compute_log_odds(pred)
 
-    lor = np.sum((log_odds_obs - log_odds_pred) ** 2)
+#     lor = np.sum((log_odds_obs - log_odds_pred) ** 2)
 
-    return lor
+#     return lor
 
 
-# Example
-obs = np.array([0, 1, 2, 1, 0, 2])
-pred = np.array([0, 1, 1, 0, 0, 2])
-print(cumulative_log_odds_ratio(obs, pred))
+# # Example
+# obs = np.array([0, 1, 2, 1, 0, 2])
+# pred = np.array([0, 1, 1, 0, 0, 2])
+# print(cumulative_log_odds_ratio(obs, pred))
 
 
 # Add spearmann corr

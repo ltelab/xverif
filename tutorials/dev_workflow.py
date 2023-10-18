@@ -5,47 +5,35 @@ Created on Fri Oct 13 12:02:13 2023.
 
 @author: ghiggi
 """
-import numpy as np
 import xarray as xr
 import xverif
 from xverif.datasets import (
-    create_ensemble_dataset,
     create_ensemble_forecast_dataset,
-    # create_multimodel_dataset,
-    # create_multimodel_ensemble_forecast_dataset,
     create_spatial2d_dataset,
-    # create_spatial3d_dataset,
     create_timeseries_dataset,
     create_timeseries_forecast_dataset,
 )
-from xverif.wrappers import align_xarray_objects
-
-# Simulate obs and pred
-obs = create_spatial2d_dataset(obs_number=1000)
-
-pred = create_ensemble_dataset(obs_number=1000)
-pred = create_ensemble_forecast_dataset(obs_number=1000)
-
-
-# Broadcasting obs to pred
-pred1, obs1 = xr.broadcast(pred, obs)
-np.testing.assert_allclose(
-    obs1.isel({"realization": 0})["var1"].data,
-    obs1.isel({"realization": 1})["var1"].data,
-)
-
-# Align datasets
-pred2, obs2 = align_xarray_objects(pred, obs)
 
 ####--------------------------------------------------------------------------.
 #### Compute deterministic skills (time series dataset)
 # --> (time: 100, stations: 100)
-obs = create_timeseries_dataset(100)
-pred = create_timeseries_forecast_dataset(100)
-
-
 data_type = "continuous"
+n_categories = None
+
 data_type = "binary"
+n_categories = 2
+
+data_type = "multiclass"
+n_categories = 4
+
+
+obs = create_timeseries_dataset(100, data_type=data_type, n_categories=n_categories)
+pred = create_timeseries_forecast_dataset(
+    100, data_type=data_type, n_categories=n_categories
+)
+
+# pred["var0"].data
+
 
 sample_dims = "time"
 skip_options = [
@@ -60,6 +48,7 @@ ds_skills = xverif.deterministic(
     sample_dims=sample_dims,
     implementation="loop",
     skip_options=skip_options,
+    n_categories=n_categories,
 )
 
 
@@ -70,6 +59,7 @@ ds_skills1 = xverif.deterministic(
     sample_dims=sample_dims,
     implementation="vectorized",
     skip_options=skip_options,
+    n_categories=n_categories,
 )
 
 
@@ -150,24 +140,7 @@ ds_skills.data.visualize()
 
 
 ####--------------------------------------------------------------------------.
-from xverif.metrics.deterministic.continuous_vectorized import get_available_metrics
-
-d = get_available_metrics()
-
-# To avoid creating the large chunks, set the option
-#  with dask.config.set(**{'array.slicing.split_large_chunks': True}) :
-
-
-# Emulate xr_apply_ufunc dimension reordering in continuous ndarray
-# pred = pred.transpose(..., "x","y")["var1"].data
-# obs = np.expand_dims(obs.transpose(..., "x","y")["var1"].data, axis=[1,2])
-# axis = [3, 4]
-# pred.shape
-# obs.shape
-
-
 implementations = ["loop", "vectorized"]
-
 for implementation in implementations:
     print(f"Implementation: {implementation}")
     ds_skills = xverif.deterministic(
@@ -178,16 +151,3 @@ for implementation in implementations:
         implementation=implementation,
         skip_options=[],
     )
-
-
-###----------------------------------------------------------------------------
-#### DEBUG of vectorized code
-# from xverif.metrics.deterministic.continuous_vectorized import get_stacking_dict
-# obs_broadcasted = obs.broadcast_like(pred)
-# stacking_dict = get_stacking_dict(pred, sample_dims=sample_dims)
-# pred = pred.stack(stacking_dict)
-# obs = obs_broadcasted.stack(stacking_dict)
-
-
-# pred = pred.data
-# obs = obs.data

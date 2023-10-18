@@ -29,7 +29,7 @@ def _get_metrics(pred, obs, drop_options=None):
 
     # If not non-NaN data, return a vector of nan data
     if len(pred) == 0:
-        return np.ones(54) * np.nan
+        return np.ones(55) * np.nan
 
     # Calculate number hits, misses, false alarms, correct rejects
     H = np.nansum(np.logical_and(pred == 1, obs == 1), dtype="float64")
@@ -134,7 +134,7 @@ def _get_metrics(pred, obs, drop_options=None):
     # - Zero-One Loss
     # - Overall error rate
     # - 1−ACC
-    error_rate = N_wrong / N
+    HL = N_wrong / N
 
     # Accuracy (fraction correct)
     # - Fraction correct
@@ -272,6 +272,7 @@ def _get_metrics(pred, obs, drop_options=None):
         "Markedness": Markedness,
         "FB": FB,
         "HK": HK,
+        "HL": HL,
         "ACC": ACC,
         "ACC_std": ACC_std,
         "CSI": CSI,
@@ -340,6 +341,7 @@ def get_metrics_info():
         "Markedness",
         "FB",
         "HK",
+        "HL",
         "ACC",
         "ACC_std",
         "CSI",
@@ -370,7 +372,7 @@ def get_metrics_info():
     return func, skill_names
 
 
-@print_elapsed_time(task="deterministic categorical")
+@print_elapsed_time(task="deterministic binary")
 def _xr_apply_routine(
     pred,
     obs,

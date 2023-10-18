@@ -10,7 +10,7 @@ from importlib import import_module
 
 import xarray as xr
 
-from xverif.masking import mask_datasets
+from xverif.masking import mask_dataarrays, mask_datasets
 
 ValidForecastType = tp.Literal[
     "continuous", "binary", "multiclass", "probability", "ordinal", "count"
@@ -135,6 +135,7 @@ def deterministic(
     metrics=None,
     compute=True,
     skip_options=None,
+    n_categories=None,
 ):
     """Compute deterministic metrics."""
     pred, obs = ensure_common_xarray_format(pred, obs)  # _check_args(pred, obs)
@@ -162,8 +163,11 @@ def deterministic(
         # Broadcast obs to pred (for preprocessing)
         # - Creates a view, not a copy !
         obs = obs.broadcast_like(pred)
-        # Mask datasets
-        pred, obs = mask_datasets(pred, obs, masking_options=skip_options)
+        # Mask Dataset / DataArrays
+        if isinstance(pred, xr.Dataset):
+            pred, obs = mask_datasets(pred, obs, masking_options=skip_options)
+        else:
+            pred, obs = mask_dataarrays(pred, obs, masking_options=skip_options)
 
     # Convert Dataset to DataArray
     # - Enable to vectorize also over variables if numpy
@@ -176,6 +180,8 @@ def deterministic(
         routine_kwargs["drop_options"] = skip_options
     elif implementation == "vectorized":
         routine_kwargs["metrics"] = metrics
+    if data_type == "multiclass":
+        routine_kwargs["n_categories"] = n_categories
 
     # Retrieve xarray routine
     _xr_routine = _get_xr_routine(

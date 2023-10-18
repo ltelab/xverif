@@ -103,7 +103,7 @@ ds_skills = xverif.deterministic(
 ####--------------------------------------------------------------------------.
 #### TODOs
 # 'probability'
-# - Require specifiying the category_dim !
+# - Require specifying the category_dim !
 # - based on length --> define if binary or multiclass probability
 
 

@@ -5,6 +5,9 @@ Created on Tue Jun 13 13:45:52 2023.
 
 @author: ghiggi
 """
+# If variable have different number of classes
+# --> Need to loop over variable and specify separate n_categories !
+
 # Overall Accuracy Metrics
 # - Confusion Matrix and Derived Metrics
 
@@ -44,7 +47,8 @@ Created on Tue Jun 13 13:45:52 2023.
 # --> https://towardsdatascience.com/micro-macro-weighted-averages-of-f1-score-clearly-explained-b603420b292f
 
 ####--------------------------------------------------------------------------.
-
+# https://towardsdatascience.com/comprehensive-guide-on-multiclass-classification-metrics-af94cfb83fbd
+# https://www.evidentlyai.com/classification-metrics/multi-class-metrics
 
 # sample_weights
 # --> _weighted_sum, _weighted_mean
